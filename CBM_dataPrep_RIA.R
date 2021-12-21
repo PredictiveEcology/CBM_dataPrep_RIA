@@ -1,17 +1,18 @@
 defineModule(sim, list(
-  name = "CBM_dataPrep_SK",
-  description = "A data preparation module to format and prepare user-provided input to the SpaDES forest-carbon modelling familly.",
+  name = "CBM_dataPrep_RIA",
+  description = "A data preparation module to format and prepare user-provided input to the SpaDES forest-carbon modelling family.",
   keywords = NA,
   authors = c(
-    person("Celine", "Boisvenue", email = "Celine.Boisvenue@canada.ca", role = c("aut", "cre"))
+    person("Celine", "Boisvenue", email = "Celine.Boisvenue@nrcan-rncan.gc.ca", role = c("aut", "cre")),
+    person("Alex M", "Chubaty", email = "achubaty@for-cast.ca", role = "ctb")
   ),
   childModules = character(0),
-  version = list(SpaDES.core = "1.0.2", CBM_dataPrep_SK = "0.0.1"),
+  version = list(SpaDES.core = "1.0.2", CBM_dataPrep_RIA = "0.0.1"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
-  documentation = list("README.txt", "CBM_dataPrep_SK.Rmd"),
+  documentation = list("CBM_dataPrep_RIA.Rmd"),
   reqdPkgs = list(
     "data.table", "fasterize", "magrittr", "raster", "RSQLite", "sf",
     "CBMutils", # "PredictiveEcology/CBMutils",
@@ -187,7 +188,7 @@ defineModule(sim, list(
   )
 ))
 
-doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
+doEvent.CBM_dataPrep_RIA <- function(sim, eventTime, eventType, debug = FALSE) {
   switch(
     eventType,
     init = {
@@ -198,7 +199,7 @@ doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
       sim <- Init(sim)
 
       # schedule future event(s)
-      sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "CBM_dataPrep_SK", "save")
+      sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "CBM_dataPrep_RIA", "save")
     },
     save = {
       # ! ----- EDIT BELOW ----- ! #
@@ -210,7 +211,7 @@ doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
       # schedule future event(s)
 
       # e.g.,
-      # sim <- scheduleEvent(sim, time(sim) + P(sim)$.saveInterval, "CBM_dataPrep_SK", "save")
+      # sim <- scheduleEvent(sim, time(sim) + P(sim)$.saveInterval, "CBM_dataPrep_RIA", "save")
 
       # ! ----- STOP EDITING ----- ! #
     },
