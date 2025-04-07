@@ -76,6 +76,12 @@ test_that("Module runs with study AOI", {
 
   expect_identical(data.table::key(simTest$spatialDT), "pixelIndex")
 
+  # Check spinup ages are all >= 2
+  expect_true("ageSpinup" %in% names(simTest$spatialDT))
+  expect_equal(simTest$spatialDT$ageSpinup[simTest$spatialDT$ages >= 2],
+               simTest$spatialDT$ages[simTest$spatialDT$ages >= 2])
+  expect_true(all(simTest$ageSpinup[simTest$spatialDT$ages < 2] == 2))
+
 
   ## Check output 'level3DT' ----
 
@@ -144,16 +150,6 @@ test_that("Module runs with study AOI", {
 
   # Check that there are no NAs
   expect_true(all(!is.na(simTest$spatialUnits)))
-
-
-  ## Check output 'realAges' ----
-
-  expect_true(!is.null(simTest$realAges))
-  expect_true(class(simTest$realAges) %in% c("integer", "numeric"))
-
-  # Check that the real ages match the original ages where <2 now equals 2
-  expect_equal(simTest$realAges[simTest$realAges >= 2], simTest$level3DT$ages[simTest$realAges >= 2])
-  expect_true(all(simTest$ages[simTest$realAges < 2] == 2))
 
 
   ## Check output 'disturbanceEvents' -----

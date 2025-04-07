@@ -162,7 +162,8 @@ defineModule(sim, list(
         "Required input to CBM_vol2biomass and CBM_core."),
       columns = c(
         pixelGroup      = "Pixel group ID",
-        ages            = "Stand ages extracted from input 'ageRaster' modified such that all ages are >=3",
+        ages            = "Stand ages at simulation start",
+        ageSpinup       = "Stand ages raised to minimum of age 3 to use in the spinup",
         spatial_unit_id = "Spatial unit IDs extracted from input 'spuLocator'",
         gcids           = "Factor of growth curve IDs extracted from input 'gcIndexRaster'",
         ecozones        = "Ecozone IDs extracted from input 'ecoRaster'"
@@ -197,11 +198,6 @@ defineModule(sim, list(
       desc = paste(
         "Spatial unit IDs extracted from input 'spuRaster' for each pixel group.",
         "Required input to CBM_vol2biomass")),
-    createsOutput(
-      objectName = "realAges", objectClass = "numeric",
-      desc = paste(
-        "Stand ages extracted from input 'ageRaster' for each pixel group.",
-        "Required input to CBM_core.")),
     createsOutput(
       objectName = "disturbanceEvents", objectClass = "data.table",
       desc = paste(
@@ -406,8 +402,13 @@ Init <- function(sim) {
   # Set key
   data.table::setkey(sim$spatialDT, pixelIndex)
 
+  # Alter ages for the spinup
+  ## Temporary fix to CBM_core issue: https://github.com/PredictiveEcology/CBM_core/issues/1
+  sim$spatialDT[, ageSpinup := ages]
+  sim$spatialDT[ageSpinup < 2, ageSpinup := 2]
 
-  ## Create sim$level3DT, sim$realAges, and sim$curveID ----
+
+  ## Create sim$level3DT and sim$curveID ----
 
   level3DT <- unique(sim$spatialDT[, -("pixelIndex")])
   setkeyv(level3DT, "pixelGroup")
@@ -415,12 +416,6 @@ Init <- function(sim) {
   # Set sim$level3DT$gcids to be a factor
   set(level3DT, j = "gcids",
       value = factor(CBMutils::gcidsCreate(level3DT[, sim$curveID, with = FALSE])))
-
-  # Create 'realAges' output object and set ages to be >= 2
-  ## Temporary fix to CBM_core issue: https://github.com/PredictiveEcology/CBM_core/issues/1
-  sim$realAges <- level3DT[, ages]
-  level3DT[ages <= 2, ages := 2]
-  setorderv(level3DT, "pixelGroup")
 
   # Join with spinup parameters
   setkeyv(level3DT, "spatial_unit_id")
