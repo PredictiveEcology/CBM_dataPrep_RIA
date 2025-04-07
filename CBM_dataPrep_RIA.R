@@ -33,10 +33,6 @@ defineModule(sim, list(
     expectsInput(
       objectName = "species_tr", objectClass = "dataset", desc = NA, sourceURL = NA), # FROM DEFAULTS
     expectsInput(
-      objectName = "userGcM3", objectClass = "data.frame",
-      sourceURL = "https://drive.google.com/file/d/1BYHhuuhSGIILV1gmoo9sNjAfMaxs7qAj",
-      desc = "Table summarizing growth curve volumes with columns: `gcids`, `Age`, `MerchVolume`."),
-    expectsInput(
       objectName = "canfi_species", objectClass = "data.frame",
       desc = paste("File containing the possible species in the Boudewyn table.",
                    "Note that if Boudewyn et al. added species, this should be updated.",
@@ -46,15 +42,22 @@ defineModule(sim, list(
       objectName = "canfi_speciesURL", objectClass = "character",
       desc = "URL for canfi_species"),
     expectsInput(
-      objectName = "userGcM3URL", objectClass = "character",
-      desc = "URL for userGcM3"),
-    expectsInput(
       objectName = "masterRaster", objectClass = "SpatRaster",
       desc = "Raster has NAs where there are no species and the pixel groupID where the pixels were simulated. It is used to map results",
       sourceURL = "https://drive.google.com/file/d/1h7gK44g64dwcoqhij24F2K54hs5e35Ci"),
     expectsInput(
       objectName = "masterRasterURL", objectClass = "character",
       desc = "URL for `masterRaster` - optional, need this or a `masterRaster` object."),
+    expectsInput(
+      objectName = "spuLocator", objectClass = "sf|SpatRaster",
+      desc = paste(
+        "Spatial data source from which spatial unit IDs can be extracted.",
+        "An output of CBM_defaults.")),
+    expectsInput(
+      objectName = "ecoLocator", objectClass = "sf|SpatRaster",
+      desc = paste(
+        "Spatial data source from which ecozone IDs extracted.",
+        "An output of CBM_defaults.")),
     expectsInput(
       objectName = "ageRaster", objectClass = "SpatRaster",
       sourceURL = "https://pub.data.gov.bc.ca/datasets/02dba161-fdb7-48ae-a4bb-bd6ef017c36d/2015/VEG_COMP_LYR_L1_POLY_2015.gdb.zip",
@@ -71,24 +74,21 @@ defineModule(sim, list(
       sourceURL = "https://drive.google.com/file/d/1LXSX8M46EnsTCM3wGhkiMgqWcqTubC12"),
     expectsInput(
       objectName = "gcIndexRasterURL", objectClass = "character",
-      desc = "URL for gcIndexRaster - optional, need this or a ageRaster"),
+      desc = "URL for gcIndexRaster"),
     expectsInput(
       objectName = "gcMeta", objectClass = "data.frame",
       sourceURL = "https://drive.google.com/file/d/1YmQ6sNucpEmF8gYkRMocPoeKt2P26ZiX",
-      desc = "Table of metadata about the growth curves in 'gcIndexRaster'"),
+      desc = "Growth curve metadata"),
     expectsInput(
       objectName = "gcMetaURL", objectClass = "character",
       desc = "URL for gcMeta"),
     expectsInput(
-      objectName = "spuLocator", objectClass = "sf|SpatRaster",
-      desc = paste(
-        "Spatial data source from which spatial unit IDs can be extracted.",
-        "An output of CBM_defaults.")),
+      objectName = "userGcM3", objectClass = "data.frame",
+      desc = "Growth curve volumes by age",
+      sourceURL = "https://drive.google.com/file/d/1u7o2BzPZ2Bo7hNcC8nEctNpDmp7ce84m"),
     expectsInput(
-      objectName = "ecoLocator", objectClass = "sf|SpatRaster",
-      desc = paste(
-        "Spatial data source from which ecozone IDs extracted.",
-        "An output of CBM_defaults.")),
+      objectName = "userGcM3URL", objectClass = "character",
+      desc = "URL for userGcM3"),
     expectsInput(
       objectName = "disturbanceRasters", objectClass = "list",
       sourceURL = list(
@@ -182,6 +182,12 @@ defineModule(sim, list(
       desc = paste(
         "Column names in 'level3DT' that uniquely define each pixel group growth curve ID.",
         "Required input to CBM_vol2biomass")),
+    createsOutput(
+      objectName = "userGcM3", objectClass = "character",
+      desc = "Growth curve volumes by age"),
+    createsOutput(
+      objectName = "gcMeta", objectClass = "character",
+      desc = "Growth curve metadata"),
     createsOutput(
       objectName = "ecozones", objectClass = "numeric",
       desc = paste(
@@ -279,14 +285,32 @@ doEvent.CBM_dataPrep_RIA <- function(sim, eventTime, eventType, debug = FALSE){
 
 Init <- function(sim) {
 
+  ## Read growth curve data; set sim$curveID ----
+
+  # Create sim$curveID
+  sim$curveID <- "gcids"
+
+  gcMeta <- sim$gcMeta
+  if (is.null(gcMeta)) stop("'gcMeta' not found")
+  if (!inherits(gcMeta, "data.table")){
+    gcMeta <- tryCatch(
+      data.table::as.data.table(gcMeta),
+      error = function(e) stop(
+        "'gcMeta' could not be converted to data.table: ", e$message, call. = FALSE))
+  }
+  if (!sim$curveID %in% names(gcMeta)) stop("gcMeta requires the 'gcids' column")
+  if (!"au_id"     %in% names(gcMeta)) stop("gcMeta requires the 'au_id' column")
+  if (!"ecozone"   %in% names(gcMeta)) stop("gcMeta requires the 'ecozone' column")
+
+
   ## Create sim$allPixDT ----
 
   # Set which pixel group columns are assigned from which spatial inputs
   pgCols <- c(
-    ages            = "ageRaster",
-    gcids           = "gcIndexRaster",
+    spatial_unit_id = "spuLocator",
     ecozones        = "ecoLocator",
-    spatial_unit_id = "spuLocator"
+    au_id           = "gcIndexRaster",
+    ages            = "ageRaster"
   )
 
   # Read spatial inputs
@@ -344,31 +368,39 @@ Init <- function(sim) {
   for (i in 1:length(pgCols)){
     sim$allPixDT[[names(pgCols)[[i]]]] <- terra::values(inRast[[pgCols[[i]]]])[,1]
   }
-  setkeyv(sim$allPixDT, "pixelIndex")
+
+  # Join with growth curve IDs
+  sim$allPixDT <- merge(
+    sim$allPixDT, gcMeta[, .(au_id, ecozones = ecozone, gcids)],
+    by = c("au_id", "ecozones"), all.x = TRUE)
+
+  # Keep only essential onlys
+  sim$allPixDT <- sim$allPixDT[, .(pixelIndex, spatial_unit_id, ecozones, gcids, ages)]
+
+  # Set key
+  data.table::setkey(sim$allPixDT, pixelIndex)
 
 
   ## Create sim$spatialDT ----
 
   # Create sim$spatialDT: Summarize input raster values where masterRaster is not NA
-  spatialDT <- sim$allPixDT[!is.na(terra::values(inRast$masterRaster)[,1]),]
+  sim$spatialDT <- sim$allPixDT[!is.na(terra::values(inRast$masterRaster)[,1]),]
 
-  spatialDT_isNA <- is.na(spatialDT)
+  spatialDT_isNA <- is.na(sim$spatialDT)
   if (any(spatialDT_isNA)){
-    for (i in 1:length(pgCols)){
-      if (any(spatialDT_isNA[, names(pgCols)[[i]]])) warning(
-        "Pixels have been excluded from the simulation where there are no values in ",
-        shQuote(pgCols[[i]]))
-    }
-    spatialDT <- spatialDT[!apply(spatialDT_isNA, 1, any),]
+    sim$spatialDT <- sim$spatialDT[!apply(spatialDT_isNA, 1, any),]
   }
 
   # Create pixel groups: groups of pixels with the same attributes
-  spatialDT$pixelGroup <- LandR::generatePixelGroups(
-    spatialDT, maxPixelGroup = 0, columns = names(pgCols)
+  sim$spatialDT$pixelGroup <- LandR::generatePixelGroups(
+    sim$spatialDT, maxPixelGroup = 0, columns = setdiff(names(sim$spatialDT), "pixelIndex")
   )
 
   # Keep only essential columns
-  sim$spatialDT <- spatialDT[, c("pixelIndex", "pixelGroup", names(pgCols)), with = FALSE]
+  sim$spatialDT <- sim$spatialDT[, c(names(sim$allPixDT), "pixelGroup"), with = FALSE]
+
+  # Set key
+  data.table::setkey(sim$spatialDT, pixelIndex)
 
   # Alter ages for the spinup
   ## Temporary fix to CBM_core issue: https://github.com/PredictiveEcology/CBM_core/issues/1
@@ -380,10 +412,6 @@ Init <- function(sim) {
 
   level3DT <- unique(sim$spatialDT[, -("pixelIndex")])
   setkeyv(level3DT, "pixelGroup")
-
-  # Create sim$curveID
-  sim$curveID <- c("gcids") #, "ecozones" # "id_ecozone"
-  ##TODO add to metadata -- use in multiple modules
 
   # Set sim$level3DT$gcids to be a factor
   set(level3DT, j = "gcids",
@@ -415,13 +443,6 @@ Init <- function(sim) {
   ## - Simplify this process to not require 2 extra input tables
   ## - Make this more generic to user input (this works only with the defaults)
 
-  gcMeta <- sim$gcMeta
-  if (!inherits(gcMeta, "data.table")){
-    gcMeta <- tryCatch(
-      data.table::as.data.table(gcMeta),
-      error = function(e) stop(
-        "'gcMeta' could not be converted to data.table: ", e$message, call. = FALSE))
-  }
 
   # Get species_id
   gcMeta <- gcMeta |>
@@ -557,7 +578,17 @@ Init <- function(sim) {
         fun        = data.table::fread
       )[, V1 := NULL]
 
-      names(sim$userGcM3) <- c("gcids", "Age", "MerchVolume")
+      names(sim$userGcM3) <- c("au_id", "Age", "MerchVolume")
+
+      # Set a unique ID for each RIA ecozone
+      ecozonesRIA <- c(4, 9, 12, 14)
+      sim$userGcM3 <- do.call(rbind, lapply(ecozonesRIA, function(ecozoneID){
+        cbind(ecozone = ecozoneID, sim$userGcM3)
+      }))
+      sim$userGcM3 <- cbind(
+        gcids = CBMutils::gcidsCreate(sim$userGcM3[, .(au_id, ecozone)]),
+        sim$userGcM3)
+      data.table::setkey(sim$userGcM3, gcids)
     }
   }
 
@@ -586,7 +617,15 @@ Init <- function(sim) {
         fun        = data.table::fread
       )[, V1 := NULL]
 
-      sim$gcMeta <- cbind(sim$gcMeta[, .(gcids = au_id)], sim$gcMeta)
+      # Set a unique ID for each RIA ecozone
+      ecozonesRIA <- c(4, 9, 12, 14)
+      sim$gcMeta <- do.call(rbind, lapply(ecozonesRIA, function(ecozoneID){
+        cbind(ecozone = ecozoneID, sim$gcMeta)
+      }))
+      sim$gcMeta <- cbind(
+        gcids = CBMutils::gcidsCreate(sim$gcMeta[, .(au_id, ecozone)]),
+        sim$gcMeta)
+      data.table::setkey(sim$gcMeta, gcids)
     }
   }
 
