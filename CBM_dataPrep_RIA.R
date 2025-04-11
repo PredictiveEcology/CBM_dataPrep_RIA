@@ -31,7 +31,7 @@ defineModule(sim, list(
     expectsInput(
       objectName = "spinupSQL", objectClass = "dataset", desc = NA, sourceURL = NA), # FROM DEFAULTS
     expectsInput(
-      objectName = "species_tr", objectClass = "dataset", desc = NA, sourceURL = NA), # FROM DEFAULTS
+      objectName = "CBMspecies", objectClass = "dataset", desc = NA, sourceURL = NA), # FROM DEFAULTS
     expectsInput(
       objectName = "canfi_species", objectClass = "data.frame",
       desc = "CanFI species",
@@ -441,13 +441,12 @@ Init <- function(sim) {
   ## - Simplify this process to not require 2 extra input tables
   ## - Make this more generic to user input (this works only with the defaults)
 
-
   # Get species_id
   gcMeta <- gcMeta |>
     merge(data.table::as.data.table(sim$canfi_species)[
       , .(canfi_species, name)], by = "canfi_species", all.x = TRUE) |>
-    merge(data.table::as.data.table(sim$species_tr)[
-      , .(species_id, name)], by = "name", all.x = TRUE)
+    merge(data.table::as.data.table(sim$CBMspecies)[
+      , .(species_id, species_name)], by.x = "name", by.y = "species_name", all.x = TRUE)
 
   sim$speciesPixelGroup <- merge(
     unique(sim$spatialDT[, .(pixelGroup, gcids)]),
