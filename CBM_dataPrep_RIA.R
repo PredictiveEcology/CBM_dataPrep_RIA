@@ -34,10 +34,8 @@ defineModule(sim, list(
       objectName = "species_tr", objectClass = "dataset", desc = NA, sourceURL = NA), # FROM DEFAULTS
     expectsInput(
       objectName = "canfi_species", objectClass = "data.frame",
-      desc = paste("File containing the possible species in the Boudewyn table.",
-                   "Note that if Boudewyn et al. added species, this should be updated.",
-                   "Also note that such an update is very unlikely."),
-      sourceURL = "https://docs.google.com/spreadsheets/d/1YpJ9MyETyt1LBFO81xTrIdbhjO7GoK3K/"),
+      desc = "CanFI species",
+      sourceURL = "https://drive.google.com/open?id=1l9b9V7czTZdiCIFX3dsvAsKpQxmN-Epo"),
     expectsInput(
       objectName = "canfi_speciesURL", objectClass = "character",
       desc = "URL for canfi_species"),
