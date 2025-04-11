@@ -830,7 +830,7 @@ Init <- function(sim) {
 
         # Strip matrix IDs
         if (all(c("rasterID", "eventID") %in% names(mySpuDmidsCSV) == c(TRUE, FALSE))){
-          mySpuDmidsCSV[, eventID := rasterID]
+          data.table::setnames(mySpuDmidsCSV, "rasterID", "eventID")
         }
         sim$userDist <- mySpuDmidsCSV[, .(eventID, wholeStand, spatial_unit_id)]
         sim$userDist$disturbance_type_id <- sapply(mySpuDmidsCSV$eventID, switch, `1` = 1, `2` = 204)
