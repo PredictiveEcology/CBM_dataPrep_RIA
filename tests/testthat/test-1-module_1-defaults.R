@@ -97,19 +97,15 @@ test_that("Module runs with defaults", {
   expect_true(is.factor(simTest$level3DT$gcids))
 
 
-  ## Check output 'speciesPixelGroup' ----
+  ## Check output 'gcMeta' ----
 
-  expect_true(!is.null(simTest$speciesPixelGroup))
-  expect_true(inherits(simTest$speciesPixelGroup, "data.table"))
+  expect_true(!is.null(simTest$gcMeta))
+  expect_true(inherits(simTest$gcMeta, "data.table"))
 
-  for (colName in c("pixelGroup", "species_id")){
-    expect_true(colName %in% names(simTest$speciesPixelGroup))
-    expect_true(all(!is.na(simTest$speciesPixelGroup[[colName]])))
+  for (colName in c("gcids", "species_id", "sw_hw")){
+    expect_true(colName %in% names(simTest$gcMeta))
+    expect_true(all(!is.na(simTest$gcMeta[[colName]])))
   }
-
-  # Check that there is 1 for every pixel group
-  expect_equal(nrow(simTest$speciesPixelGroup), nrow(simTest$level3DT))
-  expect_equal(sort(simTest$speciesPixelGroup$pixelGroup), simTest$level3DT$pixelGroup)
 
 
   ## Check output 'curveID' ----

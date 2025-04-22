@@ -167,15 +167,6 @@ defineModule(sim, list(
         ecozones        = "Ecozone IDs extracted from input 'ecoRaster'"
       )),
     createsOutput(
-      objectName = "speciesPixelGroup", objectClass = "data.frame",
-      desc = paste(
-        "Table connecting pixel groups to species IDs.",
-        "Required input to CBM_core."),
-      columns = c(
-        pixelGroup = "Pixel group ID",
-        species_id = "Species ID"
-      )),
-    createsOutput(
       objectName = "curveID", objectClass = "character",
       desc = paste(
         "Column names in 'level3DT' that uniquely define each pixel group growth curve ID.",
@@ -435,28 +426,83 @@ Init <- function(sim) {
   sim$spatialUnits <- sim$level3DT$spatial_unit_id
 
 
-  ## Create sim$speciesPixelGroup ----
+  ## gcMeta: set species_id ----
 
   ## TODO:
-  ## - Simplify this process to not require 2 extra input tables
+  ## - Simplify this process to not require 2 extra input tables (use LandR::sppEquivalencies_CA)
   ## - Make this more generic to user input (this works only with the defaults)
 
-  # Get species_id
-  gcMeta <- gcMeta |>
-    merge(data.table::as.data.table(sim$canfi_species)[
-      , .(canfi_species, name)], by = "canfi_species", all.x = TRUE) |>
-    merge(data.table::as.data.table(sim$CBMspecies)[
-      , .(species_id, species_name)], by.x = "name", by.y = "species_name", all.x = TRUE)
+  if (!"species" %in% names(sim$gcMeta)){
+    gcMeta <- sim$gcMeta
+    if (!inherits(gcMeta, "data.table")){
+      gcMeta <- tryCatch(
+        data.table::as.data.table(gcMeta),
+        error = function(e) stop(
+          "'gcMeta' could not be converted to data.table: ", e$message, call. = FALSE))
+    }
 
-  sim$speciesPixelGroup <- merge(
-    unique(sim$spatialDT[, .(pixelGroup, gcids)]),
-    gcMeta, all.x = TRUE)
-  setkey(sim$speciesPixelGroup, "pixelGroup")
+    # Get species_id
+    gcMeta <- gcMeta |>
+      merge(data.table::as.data.table(sim$canfi_species)[
+        , .(canfi_species, species = name)], by = "canfi_species", all.x = TRUE)
 
-  unknownSpecies <- unique(subset(sim$speciesPixelGroup, is.na(species_id))$name)
-  if (length(unknownSpecies) > 0) warning(
-    "species_id could not be determined for specie(s): ",
-    paste(shQuote(unknownSpecies), collapse = ", "))
+    sim$gcMeta <- gcMeta
+  }
+
+  ## NOTE: also sets sw_hw
+  if (!"species_id" %in% names(sim$gcMeta)){
+
+    if (is.null(sim$CBMspecies)) stop("'CBMspecies' required to set gcMeta 'species_id")
+    if (!"species" %in% names(sim$gcMeta)) stop("gcMeta requires 'species' column to determine 'species_id'")
+
+    gcMeta <- sim$gcMeta
+    if (!inherits(gcMeta, "data.table")){
+      gcMeta <- tryCatch(
+        data.table::as.data.table(gcMeta),
+        error = function(e) stop(
+          "'gcMeta' could not be converted to data.table: ", e$message, call. = FALSE))
+    }
+
+    CBMspecies <- sim$CBMspecies
+    if (!inherits(CBMspecies, "data.table")){
+      CBMspecies <- tryCatch(
+        data.table::as.data.table(CBMspecies),
+        error = function(e) stop(
+          "'CBMspecies' could not be converted to data.table: ", e$message, call. = FALSE))
+    }
+
+    # Add custom matches
+    ## TODO: confirm that this is valid and/or use LandR::sppEquivalencies_CA
+    CBMspecies <- rbind(
+      CBMspecies,
+      dplyr::mutate(CBMspecies[CBMspecies$species_name == "Subalpine fir (or alpine fir)",],
+                    species_name = "Subalpine fir"))
+    CBMspecies <- rbind(
+      CBMspecies,
+      dplyr::mutate(CBMspecies[CBMspecies$species_name == "Subalpine fir (or alpine fir)",],
+                    species_name = "Alpine fir"))
+
+    CBMspecies <- rbind(
+      CBMspecies,
+      dplyr::mutate(CBMspecies[CBMspecies$species_name == "Balsam poplar, largetooth aspen, and cottonwood",],
+                    species_name = "Balsam poplar, largetooth aspen and eastern cottonwood"))
+
+    gcMeta[,     name_lower := gsub(",", "", trimws(tolower(species)))]
+    CBMspecies[, name_lower := gsub(",", "", trimws(tolower(species_name)))]
+
+    gcMeta <- merge(
+      gcMeta,
+      CBMspecies[, .(name_lower, species_id, sw_hw = data.table::fifelse(forest_type_id == 1, "sw", "hw"))],
+      by = "name_lower", all.x = TRUE)
+
+    if (any(is.na(gcMeta$species_id))) stop(
+      "gcMeta contains species name(s) not found in CBMspecies: ",
+      paste(shQuote(unique(subset(gcMeta, is.na(species_id))$species)), collapse = ", "))
+
+    sim$gcMeta <- gcMeta[, c(names(sim$gcMeta), "species_id", "sw_hw"), with = FALSE]
+    data.table::setkey(sim$gcMeta, gcids)
+
+  }
 
 
   ## Create sim$disturbanceMeta, sim$historicDMtype, and sim$lastPassDMtype ----
