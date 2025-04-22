@@ -704,31 +704,45 @@ Init <- function(sim) {
 
       if (start(sim) != 2015) warning("Default `ageRaster` for RIA represents stand ages at year 2015", call. = FALSE)
 
-      VRI2015 <- prepInputs(
-        destinationPath = inputPath(sim),
-        url         = extractURL("ageRaster"),
-        targetFile  = "VEG_COMP_LYR_L1_POLY_2015.gdb.zip",
-        archive     = NA,
-        fun         = NA
-      )
+      # Set function to read with an extent query
+      readVRIprojAge1 <- function(targetFile){
 
-      sim$ageRaster <- sf::st_read(
-        VRI2015,
-        query = "SELECT CAST(PROJ_AGE_1 AS smallint) AS age FROM VEG_COMP_LYR_L1_POLY WHERE PROJ_AGE_1 IS NOT NULL",
-        agr   = "constant",
-        wkt_filter = if (any(sapply(c("masterRaster", "masterRasterURL"), suppliedElsewhere, sim, where = "user"))){
-          sf::st_as_text(
+        if (!is.null(sim$masterRaster)){
+
+          targetCRS <- sf::st_crs(
+            sf::st_read(
+              targetFile,
+              query      = "SELECT PROJ_AGE_1 FROM VEG_COMP_LYR_L1_POLY LIMIT 0",
+              quiet     = TRUE
+            ))
+
+          wkt_filter <- sf::st_as_text(
             sf::st_transform(
               sf::st_buffer(
                 sf::st_as_sfc(sf::st_bbox(sim$masterRaster)),
                 max(terra::res(sim$masterRaster)),
                 joinStyle = "MITRE", mitreLimit = 5
               ),
-              crs = sf::st_crs(
-                sf::st_read(VRI2015, query = "SELECT FID FROM VEG_COMP_LYR_L1_POLY LIMIT 1", quiet = TRUE)
-              )))
-          }else character(0),
-        quiet = TRUE
+              crs = targetCRS
+            ))
+
+        }else wkt_filter <- character(0)
+
+        sf::st_read(
+          targetFile,
+          query      = "SELECT CAST(PROJ_AGE_1 AS smallint) AS age FROM VEG_COMP_LYR_L1_POLY WHERE PROJ_AGE_1 IS NOT NULL",
+          wkt_filter = wkt_filter,
+          agr       = "constant",
+          quiet     = TRUE
+        )
+      }
+
+      sim$ageRaster <- prepInputs(
+        destinationPath = inputPath(sim),
+        url         = extractURL("ageRaster"),
+        targetFile  = "VEG_COMP_LYR_L1_POLY_2015.gdb.zip",
+        archive     = NA,
+        fun         = readVRIprojAge1
       ) |> Cache()
     }
   }
@@ -750,33 +764,46 @@ Init <- function(sim) {
         "User has not supplied a growth curve raster ('gcIndexRaster' or 'gcIndexRasterURL'). ",
         "Default for RIA will be used.")
 
-      VRI2020 <- prepInputs(
-        destinationPath = inputPath(sim),
-        url         = extractURL("gcIndexRaster"),
-        filename1   = "VRI_3Cols.zip",
-        targetFile  = "VRI_3Cols.shp",
-        alsoExtract = "similar",
-        fun         = NA,
-        archive = NA
-      )
+      # Set function to read with an extent query
+      readVRIcurve2 <- function(targetFile){
 
-      sim$gcIndexRaster <- sf::st_read(
-        VRI2020,
-        query = "SELECT CAST(curve2 AS integer) AS gcid FROM VRI_3Cols WHERE curve2 IS NOT NULL",
-        agr   = "constant",
-        wkt_filter = if (any(sapply(c("masterRaster", "masterRasterURL"), suppliedElsewhere, sim, where = "user"))){
-          sf::st_as_text(
+        if (!is.null(sim$masterRaster)){
+
+          targetCRS <- sf::st_crs(
+            sf::st_read(
+              targetFile,
+              query      = "SELECT curve2 FROM VRI_3Cols LIMIT 0",
+              quiet     = TRUE
+            ))
+
+          wkt_filter <- sf::st_as_text(
             sf::st_transform(
               sf::st_buffer(
                 sf::st_as_sfc(sf::st_bbox(sim$masterRaster)),
                 max(terra::res(sim$masterRaster)),
                 joinStyle = "MITRE", mitreLimit = 5
               ),
-              crs = sf::st_crs(
-                sf::st_read(VRI2020, query = "SELECT FID FROM VRI_3Cols LIMIT 1", quiet = TRUE)
-              )))
-        }else character(0),
-        quiet = TRUE
+              crs = targetCRS
+            ))
+
+        }else wkt_filter <- character(0)
+
+        sf::st_read(
+          targetFile,
+          query      = "SELECT CAST(curve2 AS integer) AS gcid FROM VRI_3Cols WHERE curve2 IS NOT NULL",
+          wkt_filter = wkt_filter,
+          agr       = "constant",
+          quiet     = TRUE
+        )
+      }
+
+      sim$gcIndexRaster <- prepInputs(
+        destinationPath = inputPath(sim),
+        url         = extractURL("gcIndexRaster"),
+        filename1   = "VRI_3Cols.zip",
+        targetFile  = "VRI_3Cols.shp",
+        alsoExtract = "similar",
+        fun         = readVRIcurve2
       ) |> Cache()
     }
   }

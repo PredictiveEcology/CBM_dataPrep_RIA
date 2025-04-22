@@ -38,7 +38,7 @@ test_that("Module runs with study AOI", {
       spuLocator = sf::st_read(file.path(spadesTestPaths$testdata, "spuLocator.shp"), quiet = TRUE),
       dMatrixAssociation = read.csv(file.path(spadesTestPaths$testdata, "disturbance_matrix_association.csv")),
       spinupSQL  = read.csv(file.path(spadesTestPaths$testdata, "spinupSQL.csv")),
-      species_tr = read.csv(file.path(spadesTestPaths$testdata, "species_tr.csv")),
+      CBMspecies = read.csv(file.path(spadesTestPaths$testdata, "CBMspecies.csv")),
 
       masterRaster = terra::rast(
         vals = 1L,
