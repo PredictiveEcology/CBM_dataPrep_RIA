@@ -83,7 +83,7 @@ defineModule(sim, list(
     expectsInput(
       objectName = "userGcM3", objectClass = "data.frame",
       desc = "Growth curve volumes by age",
-      sourceURL = "https://drive.google.com/file/d/1u7o2BzPZ2Bo7hNcC8nEctNpDmp7ce84m"),
+      sourceURL = "https://drive.google.com/file/d/1BYHhuuhSGIILV1gmoo9sNjAfMaxs7qAj"),
     expectsInput(
       objectName = "userGcM3URL", objectClass = "character",
       desc = "URL for userGcM3"),
