@@ -18,7 +18,7 @@ defineModule(sim, list(
     "PredictiveEcology/LandR@development"
   ),
   parameters = rbind(
-    defineParameter(".useCache", "logical", TRUE, NA, NA,
+    defineParameter(".useCache", "logical", default = c(".inputObjects", "Init"), NA, NA,
                     "Should caching of events or module be used?"),
     defineParameter("resampling", "character", default = "mode", NA, NA,
                     desc = "Raster resampling method")
