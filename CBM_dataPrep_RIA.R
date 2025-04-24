@@ -346,37 +346,37 @@ Init <- function(sim) {
 
 
   ## Create sim$spatialDT ----
-
-  # Create sim$spatialDT: Summarize input raster values where masterRaster is not NA
-  sim$spatialDT <- sim$allPixDT[!is.na(terra::values(inRast$masterRaster)[,1]),]
-
-  spatialDT_isNA <- is.na(sim$spatialDT)
-  if (any(spatialDT_isNA)){
-    sim$spatialDT <- sim$spatialDT[!apply(spatialDT_isNA, 1, any),]
+  if(is.null(sim$spatialDT)){
+    # Create sim$spatialDT: Summarize input raster values where masterRaster is not NA
+    sim$spatialDT <- sim$allPixDT[!is.na(terra::values(inRast$masterRaster)[,1]),]
+    
+    spatialDT_isNA <- is.na(sim$spatialDT)
+    if (any(spatialDT_isNA)){
+      sim$spatialDT <- sim$spatialDT[!apply(spatialDT_isNA, 1, any),]
+    }
+    
+    # Create pixel groups: groups of pixels with the same attributes
+    sim$spatialDT$pixelGroup <- LandR::generatePixelGroups(
+      sim$spatialDT, maxPixelGroup = 0, columns = setdiff(names(sim$spatialDT), "pixelIndex")
+    )
+    
+    # Keep only essential columns
+    sim$spatialDT <- sim$spatialDT[, c(names(sim$allPixDT), "pixelGroup"), with = FALSE]
+    
+    # Set key
+    data.table::setkey(sim$spatialDT, pixelIndex)
+    
+    # Alter ages for the spinup
+    ## Temporary fix to CBM_core issue: https://github.com/PredictiveEcology/CBM_core/issues/1
+    sim$spatialDT[, ageSpinup := ages]
+    sim$spatialDT[ageSpinup < 2, ageSpinup := 2]
+    
+    
+    ## Create sim$ecozones and sim$spatialUnits ----
+    
+    sim$ecozones     <- unique(sim$spatialDT$ecozones)
+    sim$spatialUnits <- unique(sim$spatialDT$spatial_unit_id)
   }
-
-  # Create pixel groups: groups of pixels with the same attributes
-  sim$spatialDT$pixelGroup <- LandR::generatePixelGroups(
-    sim$spatialDT, maxPixelGroup = 0, columns = setdiff(names(sim$spatialDT), "pixelIndex")
-  )
-
-  # Keep only essential columns
-  sim$spatialDT <- sim$spatialDT[, c(names(sim$allPixDT), "pixelGroup"), with = FALSE]
-
-  # Set key
-  data.table::setkey(sim$spatialDT, pixelIndex)
-
-  # Alter ages for the spinup
-  ## Temporary fix to CBM_core issue: https://github.com/PredictiveEcology/CBM_core/issues/1
-  sim$spatialDT[, ageSpinup := ages]
-  sim$spatialDT[ageSpinup < 2, ageSpinup := 2]
-
-
-  ## Create sim$ecozones and sim$spatialUnits ----
-
-  sim$ecozones     <- unique(sim$spatialDT$ecozones)
-  sim$spatialUnits <- unique(sim$spatialDT$spatial_unit_id)
-
 
   ## gcMeta: set species_id ----
 
@@ -789,7 +789,7 @@ Init <- function(sim) {
         url         = extractURL("gcIndexRaster"),
         filename1   = "VRI_3Cols.zip",
         targetFile  = "VRI_3Cols.shp",
-        alsoExtract = "similar",
+        # alsoExtract = "similar",
         fun         = readVRIcurve2
       ) |> Cache()
     }
@@ -829,6 +829,7 @@ Init <- function(sim) {
           bandYears             = 1985:2015
         )
       )
+    }
 
       # Disturbance information
       if (!suppliedElsewhere("userDist", sim) & !suppliedElsewhere("userDistURL", sim) &
@@ -850,7 +851,6 @@ Init <- function(sim) {
         # sim$userDist$distDesc <- mySpuDmidsCSV$distName
         # sim$userDist$disturbance_type_id   <- sapply(mySpuDmidsCSV$eventID, switch, `1` = 1, `2` = 4)
         # sim$userDist$disturbance_matrix_id <- mySpuDmidsCSV$disturbance_matrix_id
-      }
     }
   }
 
