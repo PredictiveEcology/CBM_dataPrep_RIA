@@ -346,7 +346,7 @@ Init <- function(sim) {
 
 
   ## Create sim$spatialDT ----
-  if(is.null(sim$spatialDT)){
+  if(is.null(sim$ecozones)){
     # Create sim$spatialDT: Summarize input raster values where masterRaster is not NA
     sim$spatialDT <- sim$allPixDT[!is.na(terra::values(inRast$masterRaster)[,1]),]
     
@@ -460,7 +460,7 @@ Init <- function(sim) {
   ## Create sim$disturbanceMeta ----
 
   # List disturbances possible within in each spatial unit
-  spuIDs <- sort(unique(sim$spatialDT$spatial_unit_id))
+  spuIDs <- sort(unique(sim$allPixDT$spatial_unit_id))
   listDist <- CBMutils::spuDist(
     spuIDs = spuIDs,
     dbPath = sim$dbPath,
