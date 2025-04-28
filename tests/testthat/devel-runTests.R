@@ -38,4 +38,7 @@
   ## Run module with defaults
   testthat::test_file("tests/testthat/test-1-module_1-defaults.R")
 
+  ## Run integration test
+  testthat::test_file("tests/testthat/test-2-multiModule_RIA-small_2015.R")
+
 
