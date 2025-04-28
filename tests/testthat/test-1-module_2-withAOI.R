@@ -31,7 +31,7 @@ test_that("Module runs with study AOI", {
         outputPath  = file.path(projectPath, "outputs")
       ),
 
-      require = c("sf", "terra", "reproducible"),
+      require = c("sf", "terra"),
 
       dbPath     = file.path(spadesTestPaths$temp$inputs, "cbm_defaults_v1.2.8340.362.db"),
       ecoLocator = sf::st_read(file.path(spadesTestPaths$testdata, "ecoLocator.shp"), quiet = TRUE),
@@ -63,34 +63,35 @@ test_that("Module runs with study AOI", {
   expect_s4_class(simTest, "simList")
 
 
-  ## Check output 'spatialDT' ----
+  ## Check output 'standDT' ----
 
-  expect_true(!is.null(simTest$spatialDT))
-  expect_true(inherits(simTest$spatialDT, "data.table"))
+  expect_true(!is.null(simTest$standDT))
+  expect_true(inherits(simTest$standDT, "data.table"))
 
-  for (colName in c("pixelIndex", "pixelGroup", "ages", "spatial_unit_id", "gcids", "ecozones")){
-    expect_true(colName %in% names(simTest$spatialDT))
-    expect_true(all(!is.na(simTest$spatialDT[[colName]])))
+  for (colName in c("pixelIndex", "area", "spatial_unit_id")){
+    expect_true(colName %in% names(simTest$standDT))
+    expect_true(all(!is.na(simTest$standDT[[colName]])))
   }
 
-  expect_identical(data.table::key(simTest$spatialDT), "pixelIndex")
+  expect_identical(data.table::key(simTest$standDT), "pixelIndex")
+
+
+  ## Check output 'cohortDT' ----
+
+  expect_true(!is.null(simTest$cohortDT))
+  expect_true(inherits(simTest$cohortDT, "data.table"))
+
+  for (colName in c("cohortID", "pixelIndex", "gcids", "ages")){
+    expect_true(colName %in% names(simTest$cohortDT))
+  }
+
+  expect_identical(data.table::key(simTest$cohortDT), "cohortID")
 
   # Check spinup ages are all >= 2
-  expect_true("ageSpinup" %in% names(simTest$spatialDT))
-  expect_equal(simTest$spatialDT$ageSpinup[simTest$spatialDT$ages >= 2],
-               simTest$spatialDT$ages[simTest$spatialDT$ages >= 2])
-  expect_true(all(simTest$ageSpinup[simTest$spatialDT$ages < 2] == 2))
-
-
-  ## Check output 'gcMeta' ----
-
-  expect_true(!is.null(simTest$gcMeta))
-  expect_true(inherits(simTest$gcMeta, "data.table"))
-
-  for (colName in c("gcids", "species_id", "sw_hw")){
-    expect_true(colName %in% names(simTest$gcMeta))
-    expect_true(all(!is.na(simTest$gcMeta[[colName]])))
-  }
+  expect_true("ageSpinup" %in% names(simTest$cohortDT))
+  expect_equal(simTest$cohortDT$ageSpinup[simTest$cohortDT$ages >= 2],
+               simTest$cohortDT$ages[simTest$cohortDT$ages >= 2])
+  expect_true(all(simTest$ageSpinup[simTest$cohortDT$ages < 2] == 2))
 
 
   ## Check output 'curveID' ----
@@ -98,25 +99,18 @@ test_that("Module runs with study AOI", {
   expect_true(!is.null(simTest$curveID))
   expect_true(length(simTest$curveID) >= 1)
   expect_true("gcids" %in% simTest$curveID)
-  expect_true(all(simTest$curveID %in% names(simTest$spatialDT)))
+  expect_true(all(simTest$curveID %in% names(simTest$cohortDT)))
 
 
-  ## Check output 'ecozones' ----
+  ## Check output 'userGcM3' ----
 
-  expect_true(!is.null(simTest$ecozones))
-  expect_true(class(simTest$ecozones) %in% c("integer", "numeric"))
+  expect_true(!is.null(simTest$userGcM3))
+  expect_true(inherits(simTest$userGcM3, "data.table"))
 
-  # Check that there are no NAs
-  expect_true(all(!is.na(simTest$ecozones)))
-
-
-  ## Check output 'spatialUnits' ----
-
-  expect_true(!is.null(simTest$spatialUnits))
-  expect_true(class(simTest$spatialUnits) %in% c("integer", "numeric"))
-
-  # Check that there are no NAs
-  expect_true(all(!is.na(simTest$spatialUnits)))
+  for (colName in c("gcids", "Age", "MerchVolume")){
+    expect_true(colName %in% names(simTest$userGcM3))
+    expect_true(all(!is.na(simTest$userGcM3[[colName]])))
+  }
 
 
   ## Check output 'disturbanceEvents' -----
@@ -130,7 +124,7 @@ test_that("Module runs with study AOI", {
     expect_true(all(!is.na(simTest$disturbanceEvents[[colName]])))
   }
 
-  expect_true(all(simTest$disturbanceEvents$pixelIndex %in% simTest$allPixDT$pixelIndex))
+  expect_true(all(simTest$disturbanceEvents$pixelIndex %in% simTest$standDT$pixelIndex))
   expect_true(all(simTest$disturbanceEvents$year       %in% start(simTest):end(simTest)))
 
   distEventsSum <- Copy(simTest$disturbanceEvents)[, .(count = .N), by = c("year", "eventID")]
