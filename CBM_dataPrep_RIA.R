@@ -16,10 +16,8 @@ defineModule(sim, list(
     "PredictiveEcology/CBMutils@development (>=2.0.1)"
   ),
   parameters = rbind(
-    defineParameter(".useCache", "character", default = c(".inputObjects", "Init"), NA, NA,
-                    "Should caching of events or module be used?"),
-    defineParameter("resampling", "character", default = "mode", NA, NA,
-                    desc = "Raster resampling method")
+    defineParameter("resampling", "character", default = "mode", NA, NA, "Raster resampling method"),
+    defineParameter(".useCache", "character", c(".inputObjects", "Init"), NA, NA, "Cache module events")
   ),
   inputObjects = bindrows(
     expectsInput(
