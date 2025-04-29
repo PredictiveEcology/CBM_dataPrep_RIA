@@ -215,7 +215,7 @@ doEvent.CBM_dataPrep_RIA <- function(sim, eventTime, eventType, debug = FALSE){
     },
 
     readDisturbanceEvents = {
-
+      sim$disturbanceRasters <- lapply(sim$disturbanceRasters, project, crs(sim$masterRaster)) |> Cache() #DC 29-04-2025 should probably be integrated in CBMutils::dataPrep_disturbanceRasters
       if (!is.null(sim$disturbanceRasters)){
 
         # Align disturbances with masterRaster and summarize in table
