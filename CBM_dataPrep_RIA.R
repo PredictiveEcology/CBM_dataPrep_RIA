@@ -218,6 +218,7 @@ doEvent.CBM_dataPrep_RIA <- function(sim, eventTime, eventType, debug = FALSE){
 
       if (!is.null(sim$disturbanceRasters)){
 
+        sim$disturbanceRasters <- lapply(sim$disturbanceRasters, project, crs(sim$masterRaster)) |> Cache() ###DC 28.04.2025: should probably be done in CBMutils::dataPrep_disturbanceRasters
         # Align disturbances with masterRaster and summarize in table
         newEvents <-  mapply(
           CBMutils::dataPrep_disturbanceRasters,
