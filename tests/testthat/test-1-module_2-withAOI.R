@@ -36,7 +36,6 @@ test_that("Module runs with study AOI", {
       dbPath     = file.path(spadesTestPaths$temp$inputs, "cbm_defaults_v1.2.8340.362.db"),
       ecoLocator = sf::st_read(file.path(spadesTestPaths$testdata, "ecoLocator.shp"), quiet = TRUE),
       spuLocator = sf::st_read(file.path(spadesTestPaths$testdata, "spuLocator.shp"), quiet = TRUE),
-      CBMspecies = read.csv(file.path(spadesTestPaths$testdata, "CBMspecies.csv")),
       disturbanceMatrix = read.csv(file.path(spadesTestPaths$testdata, "disturbance_matrix_association.csv")),
 
       masterRaster = terra::rast(

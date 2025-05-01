@@ -13,7 +13,7 @@ defineModule(sim, list(
   #documentation = list("CBM_dataPrep_RIA.Rmd"),
   reqdPkgs = list(
     "data.table", "sf", "terra",
-    "PredictiveEcology/CBMutils@development (>=2.0.1)"
+    "PredictiveEcology/CBMutils@development (>=2.0.2)"
   ),
   parameters = rbind(
     defineParameter("resampling", "character", default = "mode", NA, NA, "Raster resampling method"),
@@ -27,14 +27,9 @@ defineModule(sim, list(
       desc = "Table of disturbances with columns 'spatial_unit_id', 'disturbance_type_id', 'disturbance_matrix_id'",
       sourceURL = "https://raw.githubusercontent.com/cat-cfs/libcbm_py/main/libcbm/resources/cbm_exn/disturbance_matrix_association.csv"), # FROM DEFAULTS
     expectsInput(
-      objectName = "CBMspecies", objectClass = "dataset", desc = NA, sourceURL = NA), # FROM DEFAULTS
-    expectsInput(
       objectName = "canfi_species", objectClass = "data.frame",
       desc = "CanFI species",
       sourceURL = "https://drive.google.com/open?id=1l9b9V7czTZdiCIFX3dsvAsKpQxmN-Epo"),
-    expectsInput(
-      objectName = "canfi_speciesURL", objectClass = "character",
-      desc = "URL for canfi_species"),
     expectsInput(
       objectName = "masterRaster", objectClass = "SpatRaster",
       desc = "Raster has NAs where there are no species and the pixel groupID where the pixels were simulated. It is used to map results",
@@ -356,81 +351,67 @@ Init <- function(sim) {
   rm(allPixDT)
 
 
-  ## gcMeta: set species_id ----
+  ## gcMeta: set species_id and sw_hw columns ----
 
   ## TODO:
   ## - Simplify this process to not require 2 extra input tables (use LandR::sppEquivalencies_CA)
   ## - Make this more generic to user input (this works only with the defaults)
 
-  if (!"species" %in% names(sim$gcMeta)){
-    gcMeta <- sim$gcMeta
-    if (!inherits(gcMeta, "data.table")){
-      gcMeta <- tryCatch(
-        data.table::as.data.table(gcMeta),
+  if (any(!c("species_id", "sw_hw") %in% names(sim$gcMeta))){
+
+    if (!inherits(sim$gcMeta, "data.table")){
+      sim$gcMeta <- tryCatch(
+        data.table::as.data.table(sim$gcMeta),
         error = function(e) stop(
-          "'gcMeta' could not be converted to data.table: ", e$message, call. = FALSE))
+          "gcMeta could not be converted to data.table: ", e$message, call. = FALSE))
     }
 
-    # Get species_id
-    gcMeta <- gcMeta |>
-      merge(data.table::as.data.table(sim$canfi_species)[
-        , .(canfi_species, species = name)], by = "canfi_species", all.x = TRUE)
+    if ("species_name" %in% names(sim$gcMeta)){
 
-    sim$gcMeta <- gcMeta
-  }
+      # TODO: consider adding this species to LandR:sppEquivalencies_CA
+      ##subset(LandR::sppEquivalencies_CA, CanfiCode == 1211 & CBM_speciesID == 177) ## not found
+      nm177 <- "Balsam poplar, largetooth aspen and eastern cottonwood"
+      is177 <- sim$gcMeta$species_name == nm177
 
-  ## NOTE: also sets sw_hw
-  if (!"species_id" %in% names(sim$gcMeta)){
+      sppMatchTable <- CBMutils::sppMatch(sim$gcMeta$species_name[!is177])
 
-    if (is.null(sim$CBMspecies)) stop("'CBMspecies' required to set gcMeta 'species_id")
-    if (!"species" %in% names(sim$gcMeta)) stop("gcMeta requires 'species' column to determine 'species_id'")
+      if (any(is177)){
 
-    gcMeta <- sim$gcMeta
-    if (!inherits(gcMeta, "data.table")){
-      gcMeta <- tryCatch(
-        data.table::as.data.table(gcMeta),
-        error = function(e) stop(
-          "'gcMeta' could not be converted to data.table: ", e$message, call. = FALSE))
-    }
+        sppMatchTable <- data.table::data.table(
+          species_name  = sim$gcMeta$species_name,
+          CBM_speciesID = sppMatchTable$CBM_speciesID[match(1:nrow(sim$gcMeta), which(!is177))],
+          Broadleaf     = sppMatchTable$Broadleaf[    match(1:nrow(sim$gcMeta), which(!is177))]
+        )
+        sppMatchTable[sppMatchTable$species_name == nm177, CBM_speciesID := 177]
+        sppMatchTable[sppMatchTable$species_name == nm177, Broadleaf     := FALSE]
+      }
 
-    CBMspecies <- sim$CBMspecies
-    if (!inherits(CBMspecies, "data.table")){
-      CBMspecies <- tryCatch(
-        data.table::as.data.table(CBMspecies),
-        error = function(e) stop(
-          "'CBMspecies' could not be converted to data.table: ", e$message, call. = FALSE))
-    }
+    }else if ("canfi_code" %in% names(sim$gcMeta)){
 
-    # Add custom matches
-    ## TODO: confirm that this is valid and/or use LandR::sppEquivalencies_CA
-    CBMspecies <- rbind(
-      CBMspecies,
-      dplyr::mutate(CBMspecies[CBMspecies$species_name == "Subalpine fir (or alpine fir)",],
-                    species_name = "Subalpine fir"))
-    CBMspecies <- rbind(
-      CBMspecies,
-      dplyr::mutate(CBMspecies[CBMspecies$species_name == "Subalpine fir (or alpine fir)",],
-                    species_name = "Alpine fir"))
+      is177 <- sim$gcMeta$canfi_code == 1211
 
-    CBMspecies <- rbind(
-      CBMspecies,
-      dplyr::mutate(CBMspecies[CBMspecies$species_name == "Balsam poplar, largetooth aspen, and cottonwood",],
-                    species_name = "Balsam poplar, largetooth aspen and eastern cottonwood"))
+      sppMatchTable <- CBMutils::sppMatch(sim$gcMeta$canfi_code[!is177], matchCol = "CanfiCode")
 
-    gcMeta[,     name_lower := gsub(",", "", trimws(tolower(species)))]
-    CBMspecies[, name_lower := gsub(",", "", trimws(tolower(species_name)))]
+      if (any(is177)){
 
-    gcMeta <- merge(
-      gcMeta,
-      CBMspecies[, .(name_lower, species_id, sw_hw = data.table::fifelse(forest_type_id == 1, "sw", "hw"))],
-      by = "name_lower", all.x = TRUE)
+        sppMatchTable <- data.table::data.table(
+          canfi_code    = sim$gcMeta$canfi_code,
+          CBM_speciesID = sppMatchTable$CBM_speciesID[match(1:nrow(sim$gcMeta), which(!is177))],
+          Broadleaf     = sppMatchTable$Broadleaf[    match(1:nrow(sim$gcMeta), which(!is177))]
+        )
+        sppMatchTable[sppMatchTable$canfi_code == 1211, CBM_speciesID := 177]
+        sppMatchTable[sppMatchTable$canfi_code == 1211, Broadleaf     := FALSE]
 
-    if (any(is.na(gcMeta$species_id))) stop(
-      "gcMeta contains species name(s) not found in CBMspecies: ",
-      paste(shQuote(unique(subset(gcMeta, is.na(species_id))$species)), collapse = ", "))
+      }
 
-    sim$gcMeta <- gcMeta[, c(names(sim$gcMeta), "species_id", "sw_hw"), with = FALSE]
-    data.table::setkey(sim$gcMeta, gcids)
+    }else stop(
+      "gcMeta requires 'species_name' or 'canfi_code' column to set 'species_id' and 'sw_hw' columns")
+
+    sim$gcMeta <- cbind(
+      sim$gcMeta[, .SD, .SDcols = !intersect(c("species_id", "sw_hw"), names(sim$gcMeta))],
+      sppMatchTable[, .(species_id = CBM_speciesID, sw_hw = data.table::fifelse(Broadleaf, "hw", "sw"))]
+    )
+    rm(sppMatchTable)
 
   }
 
@@ -579,6 +560,21 @@ Init <- function(sim) {
         fun        = data.table::fread
       )[, V1 := NULL]
 
+      # Get species names
+      if (!suppliedElsewhere("canfi_species", sim)) {
+        sim$canfi_species <- prepInputs(
+          destinationPath = inputPath(sim),
+          url        = extractURL("canfi_species"),
+          targetFile = "canfi_species.csv",
+          fun        = data.table::fread
+        )
+      }
+      sim$gcMeta <- merge(
+        sim$gcMeta,
+        sim$canfi_species[, .(canfi_species, species_name = name)],
+        by = "canfi_species", all.x = TRUE)
+      sim$gcMeta$species_name[sim$gcMeta$species_name == "White birch"] <- "Paper birch"
+
       # Set a unique ID for each RIA ecozone
       ecozonesRIA <- c(4, 9, 12, 14)
       sim$gcMeta <- do.call(rbind, lapply(ecozonesRIA, function(ecozoneID){
@@ -600,25 +596,6 @@ Init <- function(sim) {
       url = sim$userDistURL,
       fun = data.table::fread
     )
-  }
-
-  # 4. Canfi species
-  if (!suppliedElsewhere("canfi_species", sim)) {
-    if (suppliedElsewhere("canfi_speciesURL", sim)){
-
-      sim$canfi_species <- prepInputs(
-        destinationPath = inputPath(sim),
-        url        = sim$canfi_speciesURL,
-        targetFile = "canfi_species.csv",
-        fun        = fread)
-
-    }else{
-      sim$canfi_species <- prepInputs(
-        destinationPath = inputPath(sim),
-        url        = extractURL("canfi_species"),
-        targetFile = "canfi_species.csv",
-        fun        = fread)
-    }
   }
 
 

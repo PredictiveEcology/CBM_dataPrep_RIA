@@ -5,8 +5,8 @@ test_that("Module runs with defaults", {
 
   ## Run simInit and spades ----
 
-  ## Only run this test manually
-  testthat::skip_if(testthat::is_testing())
+  # ## Only run this test manually
+  # testthat::skip_if(testthat::is_testing())
 
   # Set project path
   projectPath <- file.path(spadesTestPaths$temp$projects, "1-defaults")
@@ -35,7 +35,6 @@ test_that("Module runs with defaults", {
       dbPath     = file.path(spadesTestPaths$temp$inputs, "cbm_defaults_v1.2.8340.362.db"),
       ecoLocator = sf::st_read(file.path(spadesTestPaths$testdata, "ecoLocator.shp"), quiet = TRUE),
       spuLocator = sf::st_read(file.path(spadesTestPaths$testdata, "spuLocator.shp"), quiet = TRUE),
-      CBMspecies = read.csv(file.path(spadesTestPaths$testdata, "CBMspecies.csv")),
       disturbanceMatrix = read.csv(file.path(spadesTestPaths$testdata, "disturbance_matrix_association.csv"))
     )
   )
