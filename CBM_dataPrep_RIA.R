@@ -351,13 +351,13 @@ Init <- function(sim) {
   rm(allPixDT)
 
 
-  ## gcMeta: set species_id and sw_hw columns ----
-
-  ## TODO:
-  ## - Simplify this process to not require 2 extra input tables (use LandR::sppEquivalencies_CA)
-  ## - Make this more generic to user input (this works only with the defaults)
+  ## gcMeta: set 'species_id' and 'sw_hw' columns ----
 
   if (any(!c("species_id", "sw_hw") %in% names(sim$gcMeta))){
+
+    if (!"species_name" %in% names(sim$gcMeta)) stop(
+      "gcMeta requires either the 'species_id' and 'sw_hw' columns ",
+      "or the 'species_name' column to retrieve species data with CBMutils::sppMatch")
 
     if (!inherits(sim$gcMeta, "data.table")){
       sim$gcMeta <- tryCatch(
@@ -366,50 +366,31 @@ Init <- function(sim) {
           "gcMeta could not be converted to data.table: ", e$message, call. = FALSE))
     }
 
-    if ("species_name" %in% names(sim$gcMeta)){
+    # TODO: consider adding this species to LandR:sppEquivalencies_CA
+    ##subset(LandR::sppEquivalencies_CA, CanfiCode == 1211 & CBM_speciesID == 177) ## not found
+    nm177 <- "Balsam poplar, largetooth aspen and eastern cottonwood"
+    is177 <- sim$gcMeta$species_name == nm177
 
-      # TODO: consider adding this species to LandR:sppEquivalencies_CA
-      ##subset(LandR::sppEquivalencies_CA, CanfiCode == 1211 & CBM_speciesID == 177) ## not found
-      nm177 <- "Balsam poplar, largetooth aspen and eastern cottonwood"
-      is177 <- sim$gcMeta$species_name == nm177
+    sppMatchTable <- CBMutils::sppMatch(
+      sim$gcMeta$species_name[!is177], return = c("CBM_speciesID", "Broadleaf"))[, .(
+        species_id = CBM_speciesID,
+        sw_hw      = data.table::fifelse(Broadleaf, "hw", "sw")
+      )]
 
-      sppMatchTable <- CBMutils::sppMatch(sim$gcMeta$species_name[!is177])
+    if (any(is177)){
 
-      if (any(is177)){
-
-        sppMatchTable <- data.table::data.table(
-          species_name  = sim$gcMeta$species_name,
-          CBM_speciesID = sppMatchTable$CBM_speciesID[match(1:nrow(sim$gcMeta), which(!is177))],
-          Broadleaf     = sppMatchTable$Broadleaf[    match(1:nrow(sim$gcMeta), which(!is177))]
-        )
-        sppMatchTable[sppMatchTable$species_name == nm177, CBM_speciesID := 177]
-        sppMatchTable[sppMatchTable$species_name == nm177, Broadleaf     := FALSE]
-      }
-
-    }else if ("canfi_code" %in% names(sim$gcMeta)){
-
-      is177 <- sim$gcMeta$canfi_code == 1211
-
-      sppMatchTable <- CBMutils::sppMatch(sim$gcMeta$canfi_code[!is177], matchCol = "CanfiCode")
-
-      if (any(is177)){
-
-        sppMatchTable <- data.table::data.table(
-          canfi_code    = sim$gcMeta$canfi_code,
-          CBM_speciesID = sppMatchTable$CBM_speciesID[match(1:nrow(sim$gcMeta), which(!is177))],
-          Broadleaf     = sppMatchTable$Broadleaf[    match(1:nrow(sim$gcMeta), which(!is177))]
-        )
-        sppMatchTable[sppMatchTable$canfi_code == 1211, CBM_speciesID := 177]
-        sppMatchTable[sppMatchTable$canfi_code == 1211, Broadleaf     := FALSE]
-
-      }
-
-    }else stop(
-      "gcMeta requires 'species_name' or 'canfi_code' column to set 'species_id' and 'sw_hw' columns")
+      sppMatchTable <- data.table::data.table(
+        species_name = sim$gcMeta$species_name,
+        species_id   = sppMatchTable$species_id[match(1:nrow(sim$gcMeta), which(!is177))],
+        sw_hw        = sppMatchTable$sw_hw[     match(1:nrow(sim$gcMeta), which(!is177))]
+      )
+      sppMatchTable[sppMatchTable$species_name == nm177, species_id := 177]
+      sppMatchTable[sppMatchTable$species_name == nm177, sw_hw      := "hw"]
+    }
 
     sim$gcMeta <- cbind(
       sim$gcMeta[, .SD, .SDcols = !intersect(c("species_id", "sw_hw"), names(sim$gcMeta))],
-      sppMatchTable[, .(species_id = CBM_speciesID, sw_hw = data.table::fifelse(Broadleaf, "hw", "sw"))]
+      sppMatchTable
     )
     rm(sppMatchTable)
 
