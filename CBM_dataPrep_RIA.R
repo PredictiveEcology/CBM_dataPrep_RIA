@@ -13,7 +13,7 @@ defineModule(sim, list(
   #documentation = list("CBM_dataPrep_RIA.Rmd"),
   reqdPkgs = list(
     "data.table", "sf", "terra",
-    "PredictiveEcology/CBMutils@development (>=2.0.2)"
+    "PredictiveEcology/CBMutils@development (>=2.0.2.0002)"
   ),
   parameters = rbind(
     defineParameter("resampling", "character", default = "mode", NA, NA, "Raster resampling method"),
@@ -351,13 +351,12 @@ Init <- function(sim) {
   rm(allPixDT)
 
 
-  ## gcMeta: set 'species_id' and 'sw_hw' columns ----
+  ## gcMeta: get species attributes ----
 
-  if (any(!c("species_id", "sw_hw") %in% names(sim$gcMeta))){
+  if (any(!c("species_id", "sw_hw", "canfi_species", "genus") %in% names(sim$gcMeta))){
 
     if (!"species_name" %in% names(sim$gcMeta)) stop(
-      "gcMeta requires either the 'species_id' and 'sw_hw' columns ",
-      "or the 'species_name' column to retrieve species data with CBMutils::sppMatch")
+      "gcMeta requires the 'species_name' column to retrieve species data with CBMutils::sppMatch")
 
     if (!inherits(sim$gcMeta, "data.table")){
       sim$gcMeta <- tryCatch(
@@ -372,9 +371,11 @@ Init <- function(sim) {
     is177 <- sim$gcMeta$species_name == nm177
 
     sppMatchTable <- CBMutils::sppMatch(
-      sim$gcMeta$species_name[!is177], return = c("CBM_speciesID", "Broadleaf"))[, .(
-        species_id = CBM_speciesID,
-        sw_hw      = data.table::fifelse(Broadleaf, "hw", "sw")
+      sim$gcMeta$species_name[!is177], return = c("CBM_speciesID", "Broadleaf", "CanfiCode", "NFI"))[, .(
+        species_id    = CBM_speciesID,
+        sw_hw         = data.table::fifelse(Broadleaf, "hw", "sw"),
+        canfi_species = CanfiCode,
+        genus         = sapply(strsplit(NFI, "_"), `[[`, 1)
       )]
 
     if (any(is177)){
@@ -384,16 +385,16 @@ Init <- function(sim) {
         species_id   = sppMatchTable$species_id[match(1:nrow(sim$gcMeta), which(!is177))],
         sw_hw        = sppMatchTable$sw_hw[     match(1:nrow(sim$gcMeta), which(!is177))]
       )
-      sppMatchTable[sppMatchTable$species_name == nm177, species_id := 177]
-      sppMatchTable[sppMatchTable$species_name == nm177, sw_hw      := "hw"]
+      sppMatchTable[sppMatchTable$species_name == nm177, species_id    := 177]
+      sppMatchTable[sppMatchTable$species_name == nm177, sw_hw         := "hw"]
+      sppMatchTable[sppMatchTable$species_name == nm177, canfi_species := 1211]
+      sppMatchTable[sppMatchTable$species_name == nm177, genus         := "POPU"]
     }
 
     sim$gcMeta <- cbind(
-      sim$gcMeta[, .SD, .SDcols = !intersect(c("species_id", "sw_hw"), names(sim$gcMeta))],
-      sppMatchTable
-    )
+      sim$gcMeta[, .SD, .SDcols = setdiff(names(sim$gcMeta), names(sppMatchTable))],
+      sppMatchTable)
     rm(sppMatchTable)
-
   }
 
 
