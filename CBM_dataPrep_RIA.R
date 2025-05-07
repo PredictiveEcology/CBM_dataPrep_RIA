@@ -553,7 +553,7 @@ Init <- function(sim) {
       }
       sim$gcMeta <- merge(
         sim$gcMeta,
-        sim$canfi_species[, .(canfi_species, species_name = name)],
+        sim$canfi_species[, .(canfi_species, species = name, species_name = name)],
         by = "canfi_species", all.x = TRUE)
       sim$gcMeta$species_name[sim$gcMeta$species_name == "White birch"] <- "Paper birch"
 
