@@ -6,7 +6,8 @@ test_that("Module runs with defaults", {
   ## Run simInit and spades ----
 
   ## Only run this test manually
-  testthat::skip_if(testthat::is_testing())
+  testthat::skip_if_not(testthat::is_testing())
+  testthat::skip_on_ci()
 
   # Set project path
   projectPath <- file.path(spadesTestPaths$temp$projects, "1-defaults")
