@@ -1,14 +1,5 @@
 
-## SET UP ----
-
-  # Install required packages
-  ## Required because module is not an R package
-  install.packages(
-    c("testthat", "SpaDES.core", "SpaDES.project"),
-    repos = unique(c("predictiveecology.r-universe.dev", getOption("repos"))))
-
-
-## SET TEST OPTIONS ----
+## OPTIONS ----
 
   # Suppress warnings from calls to setupProject, simInit, and spades
   options("spades.test.suppressWarnings" = TRUE)
@@ -39,6 +30,6 @@
   testthat::test_file("tests/testthat/test-1-module_1-defaults.R")
 
   ## Run integration test
-  testthat::test_file("tests/testthat/test-2-multiModule_RIA-small_2015.R")
+  testthat::test_file("tests/testthat/test-2-integration_RIA-small_2015.R")
 
 

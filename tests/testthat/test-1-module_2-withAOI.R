@@ -19,7 +19,7 @@ test_that("Module runs with study AOI", {
 
     SpaDES.project::setupProject(
 
-      times = list(start = 2015, end = 2015),
+      times = list(start = 2010, end = 2015),
 
       modules = "CBM_dataPrep_RIA",
       paths   = list(
@@ -33,7 +33,15 @@ test_that("Module runs with study AOI", {
 
       require = c("sf", "terra"),
 
-      dbPath     = file.path(spadesTestPaths$temp$inputs, "dbPath.db"),
+      dbPath     = {
+        dbPath <- file.path(spadesTestPaths$inputPath, "dbPath.db")
+        if (!file.exists(dbPath)) download.file(
+          url      = "https://raw.githubusercontent.com/cat-cfs/libcbm_py/main/libcbm/resources/cbm_defaults_db/cbm_defaults_v1.2.8340.362.db",
+          destfile = dbPath,
+          mode     = "wb",
+          quiet    = TRUE)
+        dbPath
+      },
       ecoLocator = sf::st_read(file.path(spadesTestPaths$testdata, "ecoLocator.shp"), quiet = TRUE),
       spuLocator = sf::st_read(file.path(spadesTestPaths$testdata, "spuLocator.shp"), quiet = TRUE),
       disturbanceMatrix = read.csv(file.path(spadesTestPaths$testdata, "disturbance_matrix_association.csv")),

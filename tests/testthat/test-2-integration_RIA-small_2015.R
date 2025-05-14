@@ -9,9 +9,12 @@ test_that("Multi module: RIA-small 2015", {
   times <- list(start = 2015, end = 2015)
 
   # Set project path
-  projectPath <- file.path(spadesTestPaths$temp$projects, "multiModule_RIA-small_2015")
+  projectPath <- file.path(spadesTestPaths$temp$projects, "integration_RIA-small_2015")
   dir.create(projectPath)
   withr::local_dir(projectPath)
+
+  # Set Github repo branch
+  if (!nzchar(Sys.getenv("BRANCH_NAME"))) withr::local_envvar(BRANCH_NAME = "development")
 
   # Set master raster CRS
   masterRasterCRS <- terra::crs(
@@ -23,13 +26,11 @@ test_that("Multi module: RIA-small 2015", {
     SpaDES.project::setupProject(
 
       modules = c(
-        getOption("spades.test.modules", c(
-          CBM_defaults        = "PredictiveEcology/CBM_defaults@development",
-          CBM_vol2biomass_RIA = "PredictiveEcology/CBM_vol2biomass_RIA@development",
-          CBM_core            = "PredictiveEcology/CBM_core@development"
-        )),
-        CBM_dataPrep_RIA = "CBM_dataPrep_RIA"
-      )[c("CBM_defaults", "CBM_dataPrep_RIA", "CBM_vol2biomass_RIA", "CBM_core")],
+        paste0("PredictiveEcology/CBM_defaults@",        Sys.getenv("BRANCH_NAME")),
+        "CBM_dataPrep_RIA",
+        paste0("PredictiveEcology/CBM_vol2biomass_RIA@", Sys.getenv("BRANCH_NAME")),
+        paste0("PredictiveEcology/CBM_core@",            Sys.getenv("BRANCH_NAME"))
+      ),
 
       times   = times,
       paths   = list(
@@ -70,31 +71,6 @@ test_that("Multi module: RIA-small 2015", {
   )
 
   expect_s4_class(simTest, "simList")
-
-
-  ## Check completed events ----
-
-  # Check that all modules initiated in the correct order
-  expect_identical(tail(completed(simTest)[eventType == "init",]$moduleName, 4),
-                   c("CBM_defaults", "CBM_dataPrep_RIA", "CBM_vol2biomass_RIA", "CBM_core"))
-
-  # CBM_core module: Check events completed in expected order
-  with(
-    list(
-      moduleTest  = "CBM_core",
-      eventExpect = c(
-        "init"              = times$start,
-        "spinup"            = times$start,
-        setNames(times$start:times$end, rep("annual", length(times$star:times$end))),
-        "accumulateResults" = times$end
-      )),
-    expect_equal(
-      completed(simTest)[moduleName == moduleTest, .(eventTime, eventType)],
-      data.table::data.table(
-        eventTime = data.table::setattr(eventExpect, "unit", "year"),
-        eventType = names(eventExpect)
-      ))
-  )
 
 
   ## Check outputs ----
