@@ -23,6 +23,9 @@
 
 ## RUN INDIVIDUAL TESTS ----
 
+  ## Run module test: no disturbances
+  testthat::test_file("tests/testthat/test-1-module_1-RIA-small_disturbanceFree.R")
+
   ## Run module test: FRI
   testthat::test_file("tests/testthat/test-1-module_1-RIA-small_FRI.R")
 

@@ -83,10 +83,6 @@ defineModule(sim, list(
       desc = "URL for userGcM3"),
     expectsInput(
       objectName = "disturbanceRasters", objectClass = "list",
-      sourceURL = list(
-        `1` = "https://drive.google.com/file/d/1kxCL-i311yd3cS7QDQ2GwHHtyQFiiXoo", # fire
-        `2` = "https://drive.google.com/file/d/1m7mjcx5Sz--RB7x4N3cPYpGkfmxX8KPB"  # harvest
-      ),
       desc = paste(
         "One or more sets of rasters containing locations of disturbance events for each year.",
         "If the list is named with disturbance event IDs, all non-NA cells will be considered events.",
@@ -107,7 +103,6 @@ defineModule(sim, list(
         "If the vector is not named, the raster values must be event IDs.")),
     expectsInput(
       objectName = "userDist", objectClass = "data.table",
-      sourceURL = "https://drive.google.com/file/d/1Gr_oIfxR11G1ahynZ5LhjVekOIr2uH8X",
       desc = paste(
         "Table defines the values present in the user provided disturbance rasters.",
         "The user will be prompted to match these with CBM-CFS3 disturbances",
@@ -403,20 +398,7 @@ Init <- function(sim) {
 
   ## Create sim$disturbanceMeta ----
 
-  # List disturbances possible within in each spatial unit
-  spuIDs <- sort(unique(sim$standDT$spatial_unit_id))
-  listDist <- CBMutils::spuDist(
-    spuIDs = spuIDs,
-    dbPath = sim$dbPath,
-    disturbance_matrix_association = sim$disturbanceMatrix
-  )
-
-  # Check if userDist already has all the required IDs
-  if (all(c("spatial_unit_id", "disturbance_type_id", "disturbance_matrix_id") %in% names(sim$userDist))){
-    sim$disturbanceMeta <- sim$userDist
-  }
-
-  if (!suppliedElsewhere("disturbanceMeta", sim)){
+  if (!is.null(sim$userDist) & is.null(sim$disturbanceMeta)){
 
     # Read user disturbances
     userDist <- sim$userDist
@@ -428,43 +410,58 @@ Init <- function(sim) {
           "'userDist' could not be converted to data.table: ", e$message, call. = FALSE))
     }
 
-    # Match user disturbances with CBM-CFS3 disturbance matrices
-    userDistSpu <- userDist
-    if (!"spatial_unit_id" %in% names(userDist)){
-      userDistSpu <- do.call(rbind, lapply(spuIDs, function(spuID){
-        cbind(spatial_unit_id = spuID, userDist)
-      }))
+    # Check if userDist already has all the required IDs
+    if (all(c("spatial_unit_id", "disturbance_type_id", "disturbance_matrix_id") %in% names(sim$userDist))){
+      sim$disturbanceMeta <- sim$userDist
+
     }else{
-      distCols <- intersect(names(userDist), c("distName", "name", "eventID", "wholeStand"))
-      userDistSpu <- do.call(rbind, lapply(spuIDs, function(spuID){
-        cbind(spatial_unit_id = spuID, unique(userDist[, distCols, with = FALSE]))
-      }))
-      userDistSpu <- merge(userDistSpu, userDist, by = c(distCols, "spatial_unit_id"), all.x = TRUE)
-    }
 
-    askUser <- interactive() & !identical(Sys.getenv("TESTTHAT"), "true")
-    if (askUser) message(
-      "Prompting user to match input disturbances with CBM-CFS3 disturbances:")
+      # List disturbances possible within in each spatial unit
+      spuIDs <- sort(unique(sim$standDT$spatial_unit_id))
+      listDist <- CBMutils::spuDist(
+        spuIDs = spuIDs,
+        dbPath = sim$dbPath,
+        disturbance_matrix_association = sim$disturbanceMatrix
+      )
 
-    sim$disturbanceMeta <- do.call(rbind, lapply(1:nrow(userDistSpu), function(i){
-
-      if ("disturbance_type_id" %in% names(userDistSpu)){
-        userDistMatch <- subset(
-          listDist, spatial_unit_id == userDistSpu[i,]$spatial_unit_id &
-            disturbance_type_id == userDistSpu[i,]$disturbance_type_id)
-
+      # Match user disturbances with CBM-CFS3 disturbance matrices
+      userDistSpu <- userDist
+      if (!"spatial_unit_id" %in% names(userDist)){
+        userDistSpu <- do.call(rbind, lapply(spuIDs, function(spuID){
+          cbind(spatial_unit_id = spuID, userDist)
+        }))
       }else{
-
-        userDistMatch <- CBMutils::spuDistMatch(
-          userDistSpu[i,], listDist = listDist,
-          ask = askUser
-        ) |> Cache()
+        distCols <- intersect(names(userDist), c("distName", "name", "eventID", "wholeStand"))
+        userDistSpu <- do.call(rbind, lapply(spuIDs, function(spuID){
+          cbind(spatial_unit_id = spuID, unique(userDist[, distCols, with = FALSE]))
+        }))
+        userDistSpu <- merge(userDistSpu, userDist, by = c(distCols, "spatial_unit_id"), all.x = TRUE)
       }
 
-      cbind(
-        userDistSpu[i, setdiff(names(userDist), names(userDistMatch)), with = FALSE],
-        userDistMatch)
-    }))
+      askUser <- interactive() & !identical(Sys.getenv("TESTTHAT"), "true")
+      if (askUser) message(
+        "Prompting user to match input disturbances with CBM-CFS3 disturbances:")
+
+      sim$disturbanceMeta <- do.call(rbind, lapply(1:nrow(userDistSpu), function(i){
+
+        if ("disturbance_type_id" %in% names(userDistSpu)){
+          userDistMatch <- subset(
+            listDist, spatial_unit_id == userDistSpu[i,]$spatial_unit_id &
+              disturbance_type_id == userDistSpu[i,]$disturbance_type_id)
+
+        }else{
+
+          userDistMatch <- CBMutils::spuDistMatch(
+            userDistSpu[i,], listDist = listDist,
+            ask = askUser
+          ) |> Cache()
+        }
+
+        cbind(
+          userDistSpu[i, setdiff(names(userDist), names(userDistMatch)), with = FALSE],
+          userDistMatch)
+      }))
+    }
   }
 
 
@@ -711,65 +708,6 @@ Init <- function(sim) {
         buffer = if (!is.null(sim$masterRaster)) max(terra::res(sim$masterRaster)),
         agr    = "constant"
       ) |> Cache()
-    }
-  }
-
-  # Disturbances
-  if (!suppliedElsewhere("disturbanceRasters", sim)){
-
-    if (suppliedElsewhere("disturbanceRastersURL", sim) &
-        !identical(sim$disturbanceRastersURL, extractURL("disturbanceRasters"))){
-
-      sim$disturbanceRasters <- lapply(
-        sim$disturbanceRastersURL,
-        CBMutils::dataPrep_disturbanceRastersURL,
-        destinationPath = inputPath(sim)
-      )
-
-    }else{
-
-      if (!suppliedElsewhere("disturbanceRastersURL", sim, where = "user")) message(
-        "User has not supplied disturbance rasters ('disturbanceRasters' or 'disturbanceRastersURL'). ",
-        "Default for RIA will be used.")
-
-      sim$disturbanceRasters <- list(
-        `1` = CBMutils::dataPrep_disturbanceRastersURL(
-          destinationPath       = inputPath(sim),
-          disturbanceRastersURL = extractURL("disturbanceRasters")[[1]],
-          archive               = "historicalFire_1985-2015.zip",
-          targetFile            = "historicalFire_1985-2015.tif",
-          bandYears             = 1985:2015
-        ),
-        `2` = CBMutils::dataPrep_disturbanceRastersURL(
-          destinationPath       = inputPath(sim),
-          disturbanceRastersURL = extractURL("disturbanceRasters")[[2]],
-          archive               = "historicalHarvest_1985-2015.zip",
-          targetFile            = "historicalHarvest_1985-2015.tif",
-          bandYears             = 1985:2015
-        )
-      )
-
-      # Disturbance information
-      if (!suppliedElsewhere("userDist", sim) & !suppliedElsewhere("userDistURL", sim) &
-          !suppliedElsewhere("disturbanceMeta", sim)){
-
-        mySpuDmidsCSV <- prepInputs(
-          destinationPath = inputPath(sim),
-          url        = extractURL("userDist"),
-          targetFile = "mySpuDmids.csv",
-          fun        = data.table::fread
-        )
-
-        # Strip matrix IDs
-        if (all(c("rasterID", "eventID") %in% names(mySpuDmidsCSV) == c(TRUE, FALSE))){
-          data.table::setnames(mySpuDmidsCSV, "rasterID", "eventID")
-        }
-        sim$userDist <- mySpuDmidsCSV[, .(eventID, wholeStand, spatial_unit_id)]
-        sim$userDist$disturbance_type_id <- sapply(mySpuDmidsCSV$eventID, switch, `1` = 1, `2` = 204)
-        # sim$userDist$distDesc <- mySpuDmidsCSV$distName
-        # sim$userDist$disturbance_type_id   <- sapply(mySpuDmidsCSV$eventID, switch, `1` = 1, `2` = 4)
-        # sim$userDist$disturbance_matrix_id <- mySpuDmidsCSV$disturbance_matrix_id
-      }
     }
   }
 

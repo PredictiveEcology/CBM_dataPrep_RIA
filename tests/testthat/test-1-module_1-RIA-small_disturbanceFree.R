@@ -1,15 +1,15 @@
 
 if (!testthat::is_testing()) source(testthat::test_path("setup.R"))
 
-test_that("Module: RIA-small - presentDay", {
+test_that("Module: RIA-small - no disturbances", {
 
   ## Run simInit and spades ----
 
   # Set times
-  times <- list(start = 1985, end = 2015)
+  times <- list(start = 2020, end = 2025)
 
   # Set project path
-  projectPath <- file.path(spadesTestPaths$temp$projects, "1-RIA-small_presentDay")
+  projectPath <- file.path(spadesTestPaths$temp$projects, "1-RIA-small_disturbanceFree")
   dir.create(projectPath)
   withr::local_dir(projectPath)
 
@@ -54,30 +54,6 @@ test_that("Module: RIA-small - presentDay", {
         res  = 250,
         ext  = c(xmin = -1653000, xmax = -1553000, ymin = 7765000, ymax = 7865000),
         crs  = masterRasterCRS
-      ),
-
-      disturbanceMeta = data.table(
-        eventID             = c(1, 2),
-        name                = c("wildfire", "harvest"),
-        disturbance_type_id = c(1, 204),
-        wholeStand          = 1
-      ),
-
-      disturbanceRasters = list(
-        `1` = CBMutils::dataPrep_disturbanceRastersURL(
-          destinationPath       = spadesTestPaths$inputPath,
-          disturbanceRastersURL = "https://drive.google.com/file/d/1kxCL-i311yd3cS7QDQ2GwHHtyQFiiXoo",
-          archive               = "historicalFire_1985-2015.zip",
-          targetFile            = "historicalFire_1985-2015.tif",
-          bandYears             = 1985:2015
-        ),
-        `2` = CBMutils::dataPrep_disturbanceRastersURL(
-          destinationPath       = spadesTestPaths$inputPath,
-          disturbanceRastersURL = "https://drive.google.com/file/d/1m7mjcx5Sz--RB7x4N3cPYpGkfmxX8KPB",
-          archive               = "historicalHarvest_1985-2015.zip",
-          targetFile            = "historicalHarvest_1985-2015.tif",
-          bandYears             = 1985:2015
-        )
       )
     )
   )
@@ -149,27 +125,12 @@ test_that("Module: RIA-small - presentDay", {
 
   ## Check output 'disturbanceEvents' -----
 
-  expect_true(!is.null(simTest$disturbanceEvents))
-  expect_true(inherits(simTest$disturbanceEvents, "data.table"))
-
-  for (colName in c("pixelIndex", "year", "eventID")){
-    expect_true(colName %in% names(simTest$disturbanceEvents))
-    expect_true(is.integer(simTest$disturbanceEvents[[colName]]))
-    expect_true(all(!is.na(simTest$disturbanceEvents[[colName]])))
-  }
-
-  expect_true(all(simTest$disturbanceEvents$pixelIndex %in% simTest$standDT$pixelIndex))
-  expect_true(all(simTest$disturbanceEvents$year       %in% start(simTest):end(simTest)))
-
-  distEventsSum <- Copy(simTest$disturbanceEvents)[, .(count = .N), by = c("year", "eventID")]
-  expect_equal(subset(distEventsSum, year == "2015" & eventID == 1)$count, 62)
-  expect_equal(subset(distEventsSum, year == "2015" & eventID == 2)$count, 174)
+  expect_true(is.null(simTest$disturbanceEvents))
 
 
   ## Check output 'disturbanceMeta' ----
 
-  expect_true(!is.null(simTest$disturbanceMeta))
-  expect_true(inherits(simTest$disturbanceMeta, "data.table"))
+  expect_true(is.null(simTest$disturbanceMeta))
 
 })
 

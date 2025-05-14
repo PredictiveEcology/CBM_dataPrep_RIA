@@ -51,6 +51,30 @@ test_that("Integration: RIA-small - presentDay", {
         crs  = masterRasterCRS
       ),
 
+      disturbanceMeta = data.table(
+        eventID             = c(1, 2),
+        name                = c("wildfire", "harvest"),
+        disturbance_type_id = c(1, 204),
+        wholeStand          = 1
+      ),
+
+      disturbanceRasters = list(
+        `1` = CBMutils::dataPrep_disturbanceRastersURL(
+          destinationPath       = spadesTestPaths$inputPath,
+          disturbanceRastersURL = "https://drive.google.com/file/d/1kxCL-i311yd3cS7QDQ2GwHHtyQFiiXoo",
+          archive               = "historicalFire_1985-2015.zip",
+          targetFile            = "historicalFire_1985-2015.tif",
+          bandYears             = 1985:2015
+        ),
+        `2` = CBMutils::dataPrep_disturbanceRastersURL(
+          destinationPath       = spadesTestPaths$inputPath,
+          disturbanceRastersURL = "https://drive.google.com/file/d/1m7mjcx5Sz--RB7x4N3cPYpGkfmxX8KPB",
+          archive               = "historicalHarvest_1985-2015.zip",
+          targetFile            = "historicalHarvest_1985-2015.tif",
+          bandYears             = 1985:2015
+        )
+      ),
+
       outputs = as.data.frame(expand.grid(
         objectName = c("cbmPools", "NPP"),
         saveTime   = sort(c(times$start, times$start + c(1:(times$end - times$start))))
