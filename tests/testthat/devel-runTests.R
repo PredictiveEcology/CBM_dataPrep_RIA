@@ -23,13 +23,20 @@
 
 ## RUN INDIVIDUAL TESTS ----
 
-  ## Run module with a smaller study area
-  testthat::test_file("tests/testthat/test-1-module_2-withAOI.R")
+  ## Run module test: FRI
+  testthat::test_file("tests/testthat/test-1-module_1-RIA-small_FRI.R")
 
-  ## Run module with defaults
-  testthat::test_file("tests/testthat/test-1-module_1-defaults.R")
+  ## Run module test: harvest1
+  testthat::test_file("tests/testthat/test-1-module_1-RIA-small_harvest1.R")
 
-  ## Run integration test
-  testthat::test_file("tests/testthat/test-2-integration_RIA-small_2015.R")
+  ## Run module test: harvest2
+  testthat::test_file("tests/testthat/test-1-module_1-RIA-small_harvest2.R")
+
+  ## Run module test: presentDay
+  testthat::test_file("tests/testthat/test-1-module_1-RIA-small_presentDay.R")
+
+
+  ## Run integration test: presentDay
+  testthat::test_file("tests/testthat/test-2-integration_RIA-small_presentDay.R")
 
 

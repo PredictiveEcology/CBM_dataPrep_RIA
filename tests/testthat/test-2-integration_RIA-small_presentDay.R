@@ -1,15 +1,15 @@
 
 if (!testthat::is_testing()) source(testthat::test_path("setup.R"))
 
-test_that("Multi module: RIA-small 2015", {
+test_that("Integration: RIA-small - presentDay", {
 
   ## Run simInit and spades ----
 
   # Set times
-  times <- list(start = 2015, end = 2015)
+  times <- list(start = 1985, end = 2015)
 
   # Set project path
-  projectPath <- file.path(spadesTestPaths$temp$projects, "integration_RIA-small_2015")
+  projectPath <- file.path(spadesTestPaths$temp$projects, "2-integration_RIA-small_presentDay")
   dir.create(projectPath)
   withr::local_dir(projectPath)
 
@@ -36,9 +36,9 @@ test_that("Multi module: RIA-small 2015", {
       paths   = list(
         projectPath = projectPath,
         modulePath  = spadesTestPaths$temp$modules,
-        packagePath = spadesTestPaths$temp$packages,
-        inputPath   = spadesTestPaths$temp$inputs,
-        cachePath   = spadesTestPaths$temp$cache,
+        packagePath = spadesTestPaths$packagePath,
+        inputPath   = spadesTestPaths$inputPath,
+        cachePath   = spadesTestPaths$cachePath,
         outputPath  = file.path(projectPath, "outputs")
       ),
 

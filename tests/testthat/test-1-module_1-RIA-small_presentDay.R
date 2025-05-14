@@ -1,12 +1,15 @@
 
 if (!testthat::is_testing()) source(testthat::test_path("setup.R"))
 
-test_that("Module runs with study AOI", {
+test_that("Module: RIA-small - presentDay", {
 
   ## Run simInit and spades ----
 
+  # Set times
+  times <- list(start = 1985, end = 2015)
+
   # Set project path
-  projectPath <- file.path(spadesTestPaths$temp$projects, "2-withAOI")
+  projectPath <- file.path(spadesTestPaths$temp$projects, "1-RIA-small_presentDay")
   dir.create(projectPath)
   withr::local_dir(projectPath)
 
@@ -19,15 +22,15 @@ test_that("Module runs with study AOI", {
 
     SpaDES.project::setupProject(
 
-      times = list(start = 2010, end = 2015),
+      times = times,
 
       modules = "CBM_dataPrep_RIA",
       paths   = list(
         projectPath = projectPath,
-        modulePath  = spadesTestPaths$temp$modules,
-        packagePath = spadesTestPaths$temp$packages,
-        inputPath   = spadesTestPaths$temp$inputs,
-        cachePath   = spadesTestPaths$temp$cache,
+        modulePath  = spadesTestPaths$modulePath,
+        packagePath = spadesTestPaths$packagePath,
+        inputPath   = spadesTestPaths$inputPath,
+        cachePath   = spadesTestPaths$cachePath,
         outputPath  = file.path(projectPath, "outputs")
       ),
 

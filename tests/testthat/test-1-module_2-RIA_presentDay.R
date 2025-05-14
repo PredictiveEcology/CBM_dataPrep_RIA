@@ -1,16 +1,19 @@
 
 if (!testthat::is_testing()) source(testthat::test_path("setup.R"))
 
-test_that("Module runs with defaults", {
+test_that("Module: RIA - presentDay", {
 
   ## Run simInit and spades ----
 
-  ## Only run this test manually
+  # Set times
+  times <- list(start = 1985, end = 2015)
+
+  ## Only run this test manually due to size
   testthat::skip_if_not(testthat::is_testing())
   testthat::skip_on_ci()
 
   # Set project path
-  projectPath <- file.path(spadesTestPaths$temp$projects, "1-defaults")
+  projectPath <- file.path(spadesTestPaths$temp$projects, "2-RIA_presentDay")
   dir.create(projectPath)
   withr::local_dir(projectPath)
 
@@ -19,15 +22,15 @@ test_that("Module runs with defaults", {
 
     SpaDES.project::setupProject(
 
-      times = list(start = 2015, end = 2015),
+      times = times,
 
       modules = "CBM_dataPrep_RIA",
       paths   = list(
         projectPath = projectPath,
-        modulePath  = spadesTestPaths$temp$modules,
-        packagePath = spadesTestPaths$temp$packages,
-        inputPath   = spadesTestPaths$temp$inputs,
-        cachePath   = spadesTestPaths$temp$cache,
+        modulePath  = spadesTestPaths$modulePath,
+        packagePath = spadesTestPaths$packagePath,
+        inputPath   = spadesTestPaths$inputPath,
+        cachePath   = spadesTestPaths$cachePath,
         outputPath  = file.path(projectPath, "outputs")
       ),
 
