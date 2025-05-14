@@ -49,10 +49,13 @@ defineModule(sim, list(
         "An output of CBM_defaults.")),
     expectsInput(
       objectName = "ageRaster", objectClass = "SpatRaster",
-      sourceURL = "https://pub.data.gov.bc.ca/datasets/02dba161-fdb7-48ae-a4bb-bd6ef017c36d/2015/VEG_COMP_LYR_L1_POLY_2015.gdb.zip",
+      sourceURL = c(
+        `2015` = "https://pub.data.gov.bc.ca/datasets/02dba161-fdb7-48ae-a4bb-bd6ef017c36d/2015/VEG_COMP_LYR_L1_POLY_2015.gdb.zip",
+        `2020` = "https://drive.google.com/file/d/1LXSX8M46EnsTCM3wGhkiMgqWcqTubC12"
+      ),
       desc = paste(
         "Spatial data source from which stand ages can be extracted.",
-        "The default is BC VRI data from 2015"
+        "The default is BC VRI data from 2015 or 2020"
       )),
     expectsInput(
       objectName = "ageRasterURL", objectClass = "character",
@@ -626,24 +629,51 @@ Init <- function(sim) {
         "User has not supplied an age raster ('ageRaster' or 'ageRasterURL'). ",
         "Default for RIA will be used.")
 
-      if (start(sim) != 2015) warning("Default `ageRaster` for RIA represents stand ages at year 2015", call. = FALSE)
+      if (start(sim) >= 2020){
 
-      ageRasterPath <- prepInputs(
-        destinationPath = inputPath(sim),
-        url         = extractURL("ageRaster"),
-        targetFile  = "VEG_COMP_LYR_L1_POLY_2015.gdb.zip",
-        archive     = NA,
-        fun         = NA
-      ) |> Cache()
+        #sim$ageRasterYear <- 2020
+        if (start(sim) != 2020) warning("Default `ageRaster` for RIA represents stand ages at year 2020", call. = FALSE)
 
-      sim$ageRaster <- st_read_extent(
-        ageRasterPath,
-        layer  = "VEG_COMP_LYR_L1_POLY",
-        query  = "SELECT CAST(PROJ_AGE_1 AS smallint) AS age FROM VEG_COMP_LYR_L1_POLY WHERE PROJ_AGE_1 IS NOT NULL",
-        extent = sim$masterRaster,
-        buffer = if (!is.null(sim$masterRaster)) max(terra::res(sim$masterRaster)),
-        agr    = "constant"
-      ) |> Cache()
+        vri3ColsPath <- prepInputs(
+          destinationPath = inputPath(sim),
+          url         = extractURL("ageRaster")[[1]],
+          filename1   = "VRI_3Cols.zip",
+          targetFile  = "VRI_3Cols.shp",
+          alsoExtract = "similar",
+          fun         = NA
+        ) |> Cache()
+
+        sim$ageRaster <- st_read_extent(
+          vri3ColsPath,
+          layer  = "VRI_3Cols",
+          query  = "SELECT CAST(PROJ_AGE_1 AS smallint) AS age FROM VRI_3Cols WHERE PROJ_AGE_1 IS NOT NULL",
+          extent = sim$masterRaster,
+          buffer = if (!is.null(sim$masterRaster)) max(terra::res(sim$masterRaster)),
+          agr    = "constant"
+        ) |> Cache()
+
+      }else{
+
+        #sim$ageRasterYear <- 2015
+        if (start(sim) != 2015) warning("Default `ageRaster` for RIA represents stand ages at year 2015", call. = FALSE)
+
+        ageRasterPath <- prepInputs(
+          destinationPath = inputPath(sim),
+          url         = extractURL("ageRaster")[[1]],
+          targetFile  = "VEG_COMP_LYR_L1_POLY_2015.gdb.zip",
+          archive     = NA,
+          fun         = NA
+        ) |> Cache()
+
+        sim$ageRaster <- st_read_extent(
+          ageRasterPath,
+          layer  = "VEG_COMP_LYR_L1_POLY",
+          query  = "SELECT CAST(PROJ_AGE_1 AS smallint) AS age FROM VEG_COMP_LYR_L1_POLY WHERE PROJ_AGE_1 IS NOT NULL",
+          extent = sim$masterRaster,
+          buffer = if (!is.null(sim$masterRaster)) max(terra::res(sim$masterRaster)),
+          agr    = "constant"
+        ) |> Cache()
+      }
     }
   }
 
@@ -664,7 +694,7 @@ Init <- function(sim) {
         "User has not supplied a growth curve raster ('gcIndexRaster' or 'gcIndexRasterURL'). ",
         "Default for RIA will be used.")
 
-      gcIndexPath <- prepInputs(
+      vri3ColsPath <- prepInputs(
         destinationPath = inputPath(sim),
         url         = extractURL("gcIndexRaster"),
         filename1   = "VRI_3Cols.zip",
@@ -674,7 +704,7 @@ Init <- function(sim) {
       ) |> Cache()
 
       sim$gcIndexRaster <- st_read_extent(
-        gcIndexPath,
+        vri3ColsPath,
         layer  = "VRI_3Cols",
         query  = "SELECT CAST(curve2 AS integer) AS gcid FROM VRI_3Cols WHERE curve2 IS NOT NULL",
         extent = sim$masterRaster,
