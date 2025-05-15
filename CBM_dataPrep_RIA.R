@@ -633,7 +633,7 @@ Init <- function(sim) {
 
         vri3ColsPath <- prepInputs(
           destinationPath = inputPath(sim),
-          url         = extractURL("ageRaster")[[1]],
+          url         = extractURL("ageRaster")[[2]],
           filename1   = "VRI_3Cols.zip",
           targetFile  = "VRI_3Cols.shp",
           alsoExtract = "similar",
