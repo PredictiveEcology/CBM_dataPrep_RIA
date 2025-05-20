@@ -21,16 +21,6 @@ defineModule(sim, list(
   ),
   inputObjects = bindrows(
     expectsInput(
-      objectName = "dbPath", objectClass = "character", desc = NA, sourceURL = NA), # FROM DEFAULTS
-    expectsInput(
-      objectName = "disturbanceMatrix", objectClass = "data.frame",
-      desc = "Table of disturbances with columns 'spatial_unit_id', 'disturbance_type_id', 'disturbance_matrix_id'",
-      sourceURL = "https://raw.githubusercontent.com/cat-cfs/libcbm_py/main/libcbm/resources/cbm_exn/disturbance_matrix_association.csv"), # FROM DEFAULTS
-    expectsInput(
-      objectName = "canfi_species", objectClass = "data.frame",
-      desc = "CanFI species",
-      sourceURL = "https://drive.google.com/open?id=1l9b9V7czTZdiCIFX3dsvAsKpQxmN-Epo"),
-    expectsInput(
       objectName = "masterRaster", objectClass = "SpatRaster",
       desc = "Raster has NAs where there are no species and the pixel groupID where the pixels were simulated. It is used to map results",
       sourceURL = "https://drive.google.com/file/d/1h7gK44g64dwcoqhij24F2K54hs5e35Ci"),
@@ -75,6 +65,10 @@ defineModule(sim, list(
       objectName = "gcMetaURL", objectClass = "character",
       desc = "URL for gcMeta"),
     expectsInput(
+      objectName = "canfi_species", objectClass = "data.frame",
+      desc = "CanFI species",
+      sourceURL = "https://drive.google.com/open?id=1l9b9V7czTZdiCIFX3dsvAsKpQxmN-Epo"),
+    expectsInput(
       objectName = "userGcM3", objectClass = "data.frame",
       desc = "Growth curve volumes by age",
       sourceURL = "https://drive.google.com/file/d/1BYHhuuhSGIILV1gmoo9sNjAfMaxs7qAj"),
@@ -102,20 +96,24 @@ defineModule(sim, list(
         "If the vector is named, it must be named with the disturbance event IDs the raster includes events for.",
         "If the vector is not named, the raster values must be event IDs.")),
     expectsInput(
-      objectName = "userDist", objectClass = "data.table",
+      objectName = "disturbanceMeta", objectClass = "data.table",
       desc = paste(
-        "Table defines the values present in the user provided disturbance rasters.",
-        "The user will be prompted to match these with CBM-CFS3 disturbances",
-        "to create the 'disturbanceMeta' table input to CBM_core.",
-        "The default is a table defining the values in the default 'disturbanceRasters'."),
+        "Table defining the disturbance event types.",
+        "This associates CBM-CFS3 disturbances with the event IDs in the 'disturbanceEvents' table."),
       columns = c(
-        eventID    = "Event type ID",
-        wholeStand = "Specifies if the whole stand is disturbed (1 = TRUE; 0 = FALSE)",
-        name       = "Disturbance name (e.g. 'Wildfire')"
+        eventID             = "Event type ID",
+        disturbance_type_id = "Optional. CBM-CFS3 disturbance type ID. If not provided, the user will be prompted to choose IDs.",
+        name                = "Optional. Disturbance name (e.g. 'Wildfire'). Required if 'disturbance_type_id' absent."
       )),
     expectsInput(
-      objectName = "userDistURL", objectClass = "character",
-      desc = "URL for userDist"),
+      objectName = "disturbanceMetaURL", objectClass = "character",
+      desc = "URL for disturbanceMeta"),
+    expectsInput(
+      objectName = "dbPath", objectClass = "character",
+      sourceURL = "https://raw.githubusercontent.com/cat-cfs/libcbm_py/main/libcbm/resources/cbm_defaults_db/cbm_defaults_v1.2.8340.362.db",
+      desc = paste(
+        "Path to the CBM-CBM3 defaults database. ",
+        "Required if disturbanceMeta is missing the 'disturbance_type_id' column"))
   ),
 
   outputObjects = bindrows(
@@ -170,19 +168,7 @@ defineModule(sim, list(
         "Required input to CBM_core.")),
     createsOutput(
       objectName = "disturbanceMeta", objectClass = "data.frame",
-      desc = paste(
-        "Table defining the disturbance event types.",
-        "This is created by matching the input 'userDist' table with CBM-CFS3 disturbance types.",
-        "Required input to CBM_core."),
-      columns = c(
-        eventID               = "Event type ID from 'userDist'",
-        wholeStand            = "wholeStand flag from 'userDist'",
-        spatial_unit_id       = "Spatial unit ID",
-        disturbance_type_id   = "Disturbance type ID",
-        disturbance_matrix_id = "Disturbance matrix ID",
-        name                  = "Disturbance name",
-        description           = "Disturbance description"
-      )),
+      desc = "Table defining the disturbance event types. Required input to CBM_core.")
   )
 ))
 
@@ -349,12 +335,12 @@ Init <- function(sim) {
   rm(allPixDT)
 
 
-  ## gcMeta: get species attributes ----
+  ## Prepare sim$gcMeta ----
 
   if (any(!c("species_id", "sw_hw", "canfi_species", "genus") %in% names(sim$gcMeta))){
 
-    if (!"species_name" %in% names(sim$gcMeta)) stop(
-      "gcMeta requires the 'species_name' column to retrieve species data with CBMutils::sppMatch")
+    if (!"species" %in% names(sim$gcMeta)) stop(
+      "gcMeta requires the 'species' column to retrieve species data with CBMutils::sppMatch")
 
     if (!inherits(sim$gcMeta, "data.table")){
       sim$gcMeta <- tryCatch(
@@ -366,10 +352,14 @@ Init <- function(sim) {
     # TODO: consider adding this species to LandR:sppEquivalencies_CA
     ##subset(LandR::sppEquivalencies_CA, CanfiCode == 1211 & CBM_speciesID == 177) ## not found
     nm177 <- "Balsam poplar, largetooth aspen and eastern cottonwood"
-    is177 <- sim$gcMeta$species_name == nm177
+    is177 <- sim$gcMeta$species == nm177
 
     sppMatchTable <- CBMutils::sppMatch(
-      sim$gcMeta$species_name[!is177], return = c("CBM_speciesID", "Broadleaf", "CanfiCode", "NFI"))[, .(
+      sim$gcMeta$species[!is177],
+      return     = c("CBM_speciesID", "Broadleaf", "CanfiCode", "NFI"),
+      otherNames = list(
+        "White birch" = "Paper birch"
+      ))[, .(
         species_id    = CBM_speciesID,
         sw_hw         = data.table::fifelse(Broadleaf, "hw", "sw"),
         canfi_species = CanfiCode,
@@ -379,14 +369,14 @@ Init <- function(sim) {
     if (any(is177)){
 
       sppMatchTable <- data.table::data.table(
-        species_name = sim$gcMeta$species_name,
-        species_id   = sppMatchTable$species_id[match(1:nrow(sim$gcMeta), which(!is177))],
-        sw_hw        = sppMatchTable$sw_hw[     match(1:nrow(sim$gcMeta), which(!is177))]
+        species    = sim$gcMeta$species,
+        species_id = sppMatchTable$species_id[match(1:nrow(sim$gcMeta), which(!is177))],
+        sw_hw      = sppMatchTable$sw_hw[     match(1:nrow(sim$gcMeta), which(!is177))]
       )
-      sppMatchTable[sppMatchTable$species_name == nm177, species_id    := 177]
-      sppMatchTable[sppMatchTable$species_name == nm177, sw_hw         := "hw"]
-      sppMatchTable[sppMatchTable$species_name == nm177, canfi_species := 1211]
-      sppMatchTable[sppMatchTable$species_name == nm177, genus         := "POPU"]
+      sppMatchTable[sppMatchTable$species == nm177, species_id    := 177]
+      sppMatchTable[sppMatchTable$species == nm177, sw_hw         := "hw"]
+      sppMatchTable[sppMatchTable$species == nm177, canfi_species := 1211]
+      sppMatchTable[sppMatchTable$species == nm177, genus         := "POPU"]
     }
 
     sim$gcMeta <- cbind(
@@ -396,72 +386,35 @@ Init <- function(sim) {
   }
 
 
-  ## Create sim$disturbanceMeta ----
+  ## Prepare sim$disturbanceMeta ----
 
-  if (!is.null(sim$userDist) & is.null(sim$disturbanceMeta)){
+  if (!is.null(sim$disturbanceMeta) && !"disturbance_type_id" %in% names(sim$disturbanceMeta)){
 
-    # Read user disturbances
-    userDist <- sim$userDist
+    if (is.null(sim$dbPath)) stop("'dbPath' input required to set disturbanceMeta 'disturbance_type_id'")
 
-    if (!inherits(userDist, "data.table")){
-      userDist <- tryCatch(
-        data.table::as.data.table(userDist),
+    if (!inherits(sim$disturbanceMeta, "data.table")){
+      sim$disturbanceMeta <- tryCatch(
+        data.table::as.data.table(sim$disturbanceMeta),
         error = function(e) stop(
-          "'userDist' could not be converted to data.table: ", e$message, call. = FALSE))
+          "'disturbanceMeta' could not be converted to data.table: ", e$message, call. = FALSE))
     }
 
-    # Check if userDist already has all the required IDs
-    if (all(c("spatial_unit_id", "disturbance_type_id", "disturbance_matrix_id") %in% names(sim$userDist))){
-      sim$disturbanceMeta <- sim$userDist
+    # Match user disturbances with CBM-CFS3 disturbance type IDs
+    askUser <- interactive() & !identical(Sys.getenv("TESTTHAT"), "true")
+    if (askUser) message(
+      "Prompting user to match input disturbances with CBM-CFS3 disturbances:")
 
-    }else{
+    data.table::setnames(
+      sim$disturbanceMeta, c("name", "description"), c("nameUser", "descUser"),
+      skip_absent = TRUE)
 
-      # List disturbances possible within in each spatial unit
-      spuIDs <- sort(unique(sim$standDT$spatial_unit_id))
-      listDist <- CBMutils::spuDist(
-        spuIDs = spuIDs,
+    sim$disturbanceMeta <- cbind(
+      sim$disturbanceMeta, CBMutils::distMatch(
+        sim$disturbanceMeta$nameUser,
         dbPath = sim$dbPath,
-        disturbance_matrix_association = sim$disturbanceMatrix
-      )
-
-      # Match user disturbances with CBM-CFS3 disturbance matrices
-      userDistSpu <- userDist
-      if (!"spatial_unit_id" %in% names(userDist)){
-        userDistSpu <- do.call(rbind, lapply(spuIDs, function(spuID){
-          cbind(spatial_unit_id = spuID, userDist)
-        }))
-      }else{
-        distCols <- intersect(names(userDist), c("distName", "name", "eventID", "wholeStand"))
-        userDistSpu <- do.call(rbind, lapply(spuIDs, function(spuID){
-          cbind(spatial_unit_id = spuID, unique(userDist[, distCols, with = FALSE]))
-        }))
-        userDistSpu <- merge(userDistSpu, userDist, by = c(distCols, "spatial_unit_id"), all.x = TRUE)
-      }
-
-      askUser <- interactive() & !identical(Sys.getenv("TESTTHAT"), "true")
-      if (askUser) message(
-        "Prompting user to match input disturbances with CBM-CFS3 disturbances:")
-
-      sim$disturbanceMeta <- do.call(rbind, lapply(1:nrow(userDistSpu), function(i){
-
-        if ("disturbance_type_id" %in% names(userDistSpu)){
-          userDistMatch <- subset(
-            listDist, spatial_unit_id == userDistSpu[i,]$spatial_unit_id &
-              disturbance_type_id == userDistSpu[i,]$disturbance_type_id)
-
-        }else{
-
-          userDistMatch <- CBMutils::spuDistMatch(
-            userDistSpu[i,], listDist = listDist,
-            ask = askUser
-          ) |> Cache()
-        }
-
-        cbind(
-          userDistSpu[i, setdiff(names(userDist), names(userDistMatch)), with = FALSE],
-          userDistMatch)
-      }))
-    }
+        ask    = askUser
+      ) |> Cache()
+    )
   }
 
 
@@ -553,9 +506,8 @@ Init <- function(sim) {
       }
       sim$gcMeta <- merge(
         sim$gcMeta,
-        sim$canfi_species[, .(canfi_species, species = name, species_name = name)],
+        sim$canfi_species[, .(canfi_species, species = name)],
         by = "canfi_species", all.x = TRUE)
-      sim$gcMeta$species_name[sim$gcMeta$species_name == "White birch"] <- "Paper birch"
 
       # Set a unique ID for each RIA ecozone
       ecozonesRIA <- c(4, 9, 12, 14)
@@ -570,12 +522,11 @@ Init <- function(sim) {
   }
 
   # 3. Disturbance information
-  if (!suppliedElsewhere("userDist", sim) & !suppliedElsewhere("disturbanceMeta", sim)  &
-      suppliedElsewhere("userDistURL", sim)){
+  if (!suppliedElsewhere("disturbanceMeta", sim) & suppliedElsewhere("disturbanceMetaURL", sim)){
 
-    sim$userDist <- prepInputs(
+    sim$disturbanceMeta <- prepInputs(
       destinationPath = inputPath(sim),
-      url = sim$userDistURL,
+      url = sim$disturbanceMetaURL,
       fun = data.table::fread
     )
   }
