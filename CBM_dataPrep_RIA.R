@@ -13,7 +13,7 @@ defineModule(sim, list(
   #documentation = list("CBM_dataPrep_RIA.Rmd"),
   reqdPkgs = list(
     "data.table", "sf", "terra",
-    "PredictiveEcology/CBMutils@development (>=2.0.2.0002)"
+    "PredictiveEcology/CBMutils@development (>=2.0.3)"
   ),
   parameters = rbind(
     defineParameter("resampling", "character", default = "mode", NA, NA, "Raster resampling method"),
