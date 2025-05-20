@@ -9,7 +9,7 @@ test_that("Module: RIA - presentDay", {
   times <- list(start = 1985, end = 2015)
 
   ## Only run this test manually due to size
-  testthat::skip_if_not(testthat::is_testing())
+  testthat::skip_if(testthat::is_testing())
   testthat::skip_on_ci()
 
   # Set project path
