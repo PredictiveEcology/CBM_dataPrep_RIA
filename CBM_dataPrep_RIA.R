@@ -4,7 +4,6 @@
 defineModule(sim, list(
   name = "CBM_dataPrep_RIA",
   description = "CBM data preparation module for the RIA study area",
-  version = list(SpaDES.core = "1.0.2", CBM_dataPrep_RIA = "0.0.2"),
   authors = c(
     person("Céline",  "Boisvenue", email = "celine.boisvenue@nrcan-rncan.gc.ca", role = c("aut", "cre")),
     person("Susan",   "Murray",    email = "murray.e.susan@gmail.com",           role = c("ctb"))
