@@ -82,11 +82,7 @@ defineModule(sim, list(
         "If the list is length 1 and unnamed, the disturbance rasters must have pixel values matching event IDs.",
         "Each set of disturbance rasters must be a list or SpatRaster stack named with 4 digit years",
         "such that a single raster layer can be accessed for each disturbance year",
-        "(e.g.  `disturbanceRasters[[\"1\"]][[\"2025\"]]`).",
-        "The default rasters were made from the Landsat-derived annual fire and harvest layers as described in: ",
-        "Hermosilla, T., M.A. Wulder, J.C. White, N.C. Coops, G.W. Hobart, L.B. Campbell, (2016).",
-        "Mass data processing of time series Landsat imagery: pixels to data products for forest monitoring. ",
-        "International Journal of Digital Earth. 9(11), 1035-1054."
+        "(e.g.  `disturbanceRasters[[\"1\"]][[\"2025\"]]`)."
       )),
     expectsInput(
       objectName = "disturbanceRastersURL", objectClass = "character",
