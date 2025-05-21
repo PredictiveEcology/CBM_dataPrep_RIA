@@ -47,11 +47,18 @@ test_that("Module: RIA-small - harvest2", {
       ),
 
       disturbanceMeta = data.table(
-        eventID    = c(1, 2),
-        name       = c("wildfire", "harvest"),
-        disturbance_type_id = c(1, 204),
-        wholeStand = 1
+        eventID = c(1, 2),
+        name    = c("Wildfire", "Clearcut harvesting without salvage")
       ),
+      dbPath     = {
+        dbPath <- file.path(spadesTestPaths$inputPath, "dbPath.db")
+        if (!file.exists(dbPath)) download.file(
+          url      = "https://raw.githubusercontent.com/cat-cfs/libcbm_py/main/libcbm/resources/cbm_defaults_db/cbm_defaults_v1.2.8340.362.db",
+          destfile = dbPath,
+          mode     = "wb",
+          quiet    = TRUE)
+        dbPath
+      },
 
       disturbanceRasters = {
 
@@ -62,7 +69,7 @@ test_that("Module: RIA-small - harvest2", {
           url        = "https://drive.google.com/file/d/1PiDpeYGZJfKUPvMGlWvXkEfuThX-lD5r",
           targetFile = "tif_scenrio-carbon-less_20210622.tar.gz",
           fun        = utils::untar
-        ) |> Cache()
+        )
 
         list(
           `1` = lapply(setNames(times$start:times$end, times$start:times$end), function(year){

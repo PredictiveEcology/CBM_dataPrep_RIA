@@ -34,7 +34,7 @@ test_that("Module: RIA-small - presentDay", {
         outputPath  = file.path(projectPath, "outputs")
       ),
 
-      require = c("sf", "terra"),
+      require = c("sf", "terra", "reproducible"),
 
       ecoLocator = sf::st_read(file.path(spadesTestPaths$testdata, "ecoLocator.shp"), quiet = TRUE),
       spuLocator = sf::st_read(file.path(spadesTestPaths$testdata, "spuLocator.shp"), quiet = TRUE),
@@ -47,27 +47,34 @@ test_that("Module: RIA-small - presentDay", {
       ),
 
       disturbanceMeta = data.table(
-        eventID             = c(1, 2),
-        name                = c("wildfire", "harvest"),
-        disturbance_type_id = c(1, 204),
-        wholeStand          = 1
+        eventID = c(1, 2),
+        name    = c("Wildfire", "Clearcut harvesting without salvage")
       ),
+      dbPath     = {
+        dbPath <- file.path(spadesTestPaths$inputPath, "dbPath.db")
+        if (!file.exists(dbPath)) download.file(
+          url      = "https://raw.githubusercontent.com/cat-cfs/libcbm_py/main/libcbm/resources/cbm_defaults_db/cbm_defaults_v1.2.8340.362.db",
+          destfile = dbPath,
+          mode     = "wb",
+          quiet    = TRUE)
+        dbPath
+      },
 
       disturbanceRasters = list(
-        `1` = CBMutils::dataPrep_disturbanceRastersURL(
-          destinationPath       = spadesTestPaths$inputPath,
-          disturbanceRastersURL = "https://drive.google.com/file/d/1kxCL-i311yd3cS7QDQ2GwHHtyQFiiXoo",
-          archive               = "historicalFire_1985-2015.zip",
-          targetFile            = "historicalFire_1985-2015.tif",
-          bandYears             = 1985:2015
-        ),
-        `2` = CBMutils::dataPrep_disturbanceRastersURL(
-          destinationPath       = spadesTestPaths$inputPath,
-          disturbanceRastersURL = "https://drive.google.com/file/d/1m7mjcx5Sz--RB7x4N3cPYpGkfmxX8KPB",
-          archive               = "historicalHarvest_1985-2015.zip",
-          targetFile            = "historicalHarvest_1985-2015.tif",
-          bandYears             = 1985:2015
-        )
+        `1` = reproducible::prepInputs(
+          destinationPath = spadesTestPaths$inputPath,
+          url             = "https://drive.google.com/file/d/1kxCL-i311yd3cS7QDQ2GwHHtyQFiiXoo",
+          archive         = "historicalFire_1985-2015.zip",
+          targetFile      = "historicalFire_1985-2015.tif",
+          fun             = terra::rast
+        ) |> setNames(1985:2015),
+        `2` = reproducible::prepInputs(
+          destinationPath = spadesTestPaths$inputPath,
+          url             = "https://drive.google.com/file/d/1m7mjcx5Sz--RB7x4N3cPYpGkfmxX8KPB",
+          archive         = "historicalHarvest_1985-2015.zip",
+          targetFile      = "historicalHarvest_1985-2015.tif",
+          fun             = terra::rast
+        ) |> setNames(1985:2015)
       )
     )
   )

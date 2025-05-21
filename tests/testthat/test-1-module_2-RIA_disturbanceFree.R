@@ -1,19 +1,19 @@
 
 if (!testthat::is_testing()) source(testthat::test_path("setup.R"))
 
-test_that("Module: RIA - presentDay", {
+test_that("Module: RIA - no disturbances", {
 
   ## Run simInit and spades ----
-
-  # Set times
-  times <- list(start = 1985, end = 2015)
 
   ## Only run this test manually due to size
   testthat::skip_if(testthat::is_testing())
   testthat::skip_on_ci()
 
+  # Set times
+  times <- list(start = 2020, end = 2099)
+
   # Set project path
-  projectPath <- file.path(spadesTestPaths$temp$projects, "2-RIA_presentDay")
+  projectPath <- file.path(spadesTestPaths$temp$projects, "1-RIA_disturbanceFree")
   dir.create(projectPath)
   withr::local_dir(projectPath)
 
@@ -119,27 +119,12 @@ test_that("Module: RIA - presentDay", {
 
   ## Check output 'disturbanceEvents' -----
 
-  expect_true(!is.null(simTest$disturbanceEvents))
-  expect_true(inherits(simTest$disturbanceEvents, "data.table"))
-
-  for (colName in c("pixelIndex", "year", "eventID")){
-    expect_true(colName %in% names(simTest$disturbanceEvents))
-    expect_true(is.integer(simTest$disturbanceEvents[[colName]]))
-    expect_true(all(!is.na(simTest$disturbanceEvents[[colName]])))
-  }
-
-  expect_true(all(simTest$disturbanceEvents$pixelIndex %in% simTest$standDT$pixelIndex))
-  expect_true(all(simTest$disturbanceEvents$year       %in% start(simTest):end(simTest)))
-
-  distEventsSum <- Copy(simTest$disturbanceEvents)[, .(count = .N), by = c("year", "eventID")]
-  expect_equal(subset(distEventsSum, year == "2015" & eventID == 1)$count, 27716)
-  expect_equal(subset(distEventsSum, year == "2015" & eventID == 2)$count, 7293)
+  expect_true(is.null(simTest$disturbanceEvents))
 
 
   ## Check output 'disturbanceMeta' ----
 
-  expect_true(!is.null(simTest$disturbanceMeta))
-  expect_true(inherits(simTest$disturbanceMeta, "data.table"))
+  expect_true(is.null(simTest$disturbanceMeta))
 
 })
 

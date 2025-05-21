@@ -6,7 +6,7 @@ test_that("Module: RIA-small - no disturbances", {
   ## Run simInit and spades ----
 
   # Set times
-  times <- list(start = 2020, end = 2025)
+  times <- list(start = 2020, end = 2099)
 
   # Set project path
   projectPath <- file.path(spadesTestPaths$temp$projects, "1-RIA-small_disturbanceFree")
