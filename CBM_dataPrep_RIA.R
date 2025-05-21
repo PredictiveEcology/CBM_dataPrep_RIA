@@ -363,11 +363,10 @@ Init <- function(sim) {
 
     if (any(is177)){
 
-      sppMatchTable <- data.table::data.table(
-        species    = sim$gcMeta$species,
-        species_id = sppMatchTable$species_id[match(1:nrow(sim$gcMeta), which(!is177))],
-        sw_hw      = sppMatchTable$sw_hw[     match(1:nrow(sim$gcMeta), which(!is177))]
-      )
+      sppMatchTable <- data.table::as.data.table(c(
+        list(species = sim$gcMeta$species),
+        lapply(sppMatchTable, `[`, match(1:nrow(sim$gcMeta), which(!is177)))
+      ))
       sppMatchTable[sppMatchTable$species == nm177, species_id    := 177]
       sppMatchTable[sppMatchTable$species == nm177, sw_hw         := "hw"]
       sppMatchTable[sppMatchTable$species == nm177, canfi_species := 1211]
