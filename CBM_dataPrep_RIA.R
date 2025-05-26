@@ -11,7 +11,7 @@ defineModule(sim, list(
   timeunit = "year",
   #documentation = list("CBM_dataPrep_RIA.Rmd"),
   reqdPkgs = list(
-    "data.table", "sf", "terra",
+    "reproducible", "data.table", "sf", "terra",
     "PredictiveEcology/CBMutils@development (>=2.0.3.0001)"
   ),
   parameters = rbind(
