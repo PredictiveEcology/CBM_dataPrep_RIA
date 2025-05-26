@@ -313,6 +313,8 @@ Init <- function(sim) {
 
   # For CBM_vol2biomass
   sim$spatialDT <- allPixDT[, .SD, .SDcols = c("pixelIndex", "spatial_unit_id", "ecozones", "gcids")]
+  sim$ecozones     <- sort(unique(sim$spatialDT$ecozones))        # temporary
+  sim$spatialUnits <- sort(unique(sim$spatialDT$spatial_unit_id)) # temporary
 
   # For CBM_core
   sim$standDT   <- allPixDT[, .SD, .SDcols = c("pixelIndex", "area", "spatial_unit_id")]
