@@ -1,17 +1,15 @@
 
 if (!testthat::is_testing()) source(testthat::test_path("setup.R"))
 
-test_that("Integration: RIA-small - presentDay", {
+test_that("Integration: RIA-small - defaults", {
 
   ## Run simInit and spades ----
 
-  testthat::skip_on_ci()
-
   # Set times
-  times <- list(start = 1985, end = 2015)
+  times <- list(start = 2020, end = 2030)
 
   # Set project path
-  projectPath <- file.path(spadesTestPaths$temp$projects, "2-intg_RIA-small_presentDay")
+  projectPath <- file.path(spadesTestPaths$temp$projects, "2-intg_RIA-small")
   dir.create(projectPath)
   withr::local_dir(projectPath)
 
@@ -53,28 +51,6 @@ test_that("Integration: RIA-small - presentDay", {
         res  = 250,
         ext  = c(xmin = -1653000, xmax = -1553000, ymin = 7765000, ymax = 7865000),
         crs  = masterRasterCRS
-      ),
-
-      # Set disturbances
-      disturbanceMeta = data.table(
-        eventID = c(1, 2),
-        name    = c("Wildfire", "Clearcut harvesting without salvage")
-      ),
-      disturbanceRasters = list(
-        `1` = reproducible::prepInputs(
-          destinationPath = file.path(projectPath, "inputs"),
-          url             = "https://drive.google.com/file/d/1kxCL-i311yd3cS7QDQ2GwHHtyQFiiXoo",
-          archive         = "historicalFire_1985-2015.zip",
-          targetFile      = "historicalFire_1985-2015.tif",
-          fun             = terra::rast
-        ) |> setNames(1985:2015),
-        `2` = reproducible::prepInputs(
-          destinationPath = file.path(projectPath, "inputs"),
-          url             = "https://drive.google.com/file/d/1m7mjcx5Sz--RB7x4N3cPYpGkfmxX8KPB",
-          archive         = "historicalHarvest_1985-2015.zip",
-          targetFile      = "historicalHarvest_1985-2015.tif",
-          fun             = terra::rast
-        ) |> setNames(1985:2015)
       ),
 
       # Set outputs

@@ -23,8 +23,8 @@
 
 ## RUN INDIVIDUAL TESTS ----
 
-  ## Run module test: no disturbances
-  testthat::test_file("tests/testthat/test-1-module_1-RIA-small_disturbanceFree.R")
+  ## Run module test: defaults with no disturbances
+  testthat::test_file("tests/testthat/test-1-module_1-RIA-small_defaults.R")
 
   ## Run module test: FRI
   testthat::test_file("tests/testthat/test-1-module_1-RIA-small_FRI.R")
@@ -39,7 +39,8 @@
   testthat::test_file("tests/testthat/test-1-module_1-RIA-small_presentDay.R")
 
 
-  ## Run integration test: presentDay
+  ## Run integration tests
+  testthat::test_file("tests/testthat/test-2-integration_RIA-small_defaults.R")
   testthat::test_file("tests/testthat/test-2-integration_RIA-small_presentDay.R")
 
 
