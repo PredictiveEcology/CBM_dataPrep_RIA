@@ -39,9 +39,6 @@ test_that("Integration: CBM_dataPrep", {
         cachePath   = spadesTestPaths$cachePath,
         outputPath  = file.path(projectPath, "outputs")
       ),
-      options = list(
-        reproducible.useMemoise = TRUE
-      ),
 
       require = "terra",
 

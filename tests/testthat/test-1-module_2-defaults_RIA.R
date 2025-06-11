@@ -32,9 +32,6 @@ test_that("Module runs with defaults: All of RIA", {
         inputPath   = spadesTestPaths$inputPath,
         cachePath   = spadesTestPaths$cachePath,
         outputPath  = file.path(projectPath, "outputs")
-      ),
-      options = list(
-        reproducible.useMemoise = TRUE
       )
     )
   )

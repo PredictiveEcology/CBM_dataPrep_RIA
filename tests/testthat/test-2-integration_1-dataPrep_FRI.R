@@ -39,9 +39,6 @@ test_that("Integration: CBM_dataPrep - FRI", {
         cachePath   = spadesTestPaths$cachePath,
         outputPath  = file.path(projectPath, "outputs")
       ),
-      options = list(
-        reproducible.useMemoise = TRUE
-      ),
 
       # Set required packages for project set up
       require = c("terra", "reproducible"),

@@ -33,9 +33,6 @@ test_that("Module runs with defaults: RIA-small", {
         cachePath   = spadesTestPaths$cachePath,
         outputPath  = file.path(projectPath, "outputs")
       ),
-      options = list(
-        reproducible.useMemoise = TRUE
-      ),
 
       require = "terra",
 
