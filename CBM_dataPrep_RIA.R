@@ -64,6 +64,9 @@ defineModule(sim, list(
       objectName = "masterRaster", objectClass = "SpatRaster",
       desc = "Default `masterRaster` if not provided elsewhere by user."),
     createsOutput(
+      objectName = "adminLocator", objectClass = "sf",
+      desc = "`masterRaster` extent with admin_name set to 'British Columbia'"),
+    createsOutput(
       objectName = "ageLocator", objectClass = "sf",
       desc = "Default `ageLocator` if not provided elsewhere by user."),
     createsOutput(
@@ -102,6 +105,14 @@ doEvent.CBM_dataPrep_RIA <- function(sim, eventTime, eventType, debug = FALSE) {
 }
 
 Init <- function(sim){
+
+  # Set admin location
+  if (!is.null(sim$masterRaster)){
+    sim$adminLocator <- sf::st_sf(
+      admin_name = "British Columbia",
+      geometry = sf::st_as_sfc(sf::st_bbox(sim$masterRaster))
+    )
+  }
 
   # Return simList
   return(invisible(sim))
