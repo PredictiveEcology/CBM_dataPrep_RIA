@@ -5,39 +5,26 @@ test_that("Integration: CBM_dataPrep - presentDay", {
 
   ## Run simInit and spades ----
 
-  # Set times
-  times <- list(start = 2010, end = 2015) # Time span: 1985 - 2015
-
-  # Set project path
-  projectPath <- file.path(spadesTestPaths$temp$projects, "1-intg-1-dataPrep_presentDay")
-  dir.create(projectPath)
-  withr::local_dir(projectPath)
-
-  # Set master raster CRS
-  masterRasterCRS <- terra::crs(
-    paste(readLines(file.path(spadesTestPaths$testdata, "masterRasterCRS.prj")), collapse = "\n"))
-
-  # Set Github repo branch
-  if (!nzchar(Sys.getenv("BRANCH_NAME"))) withr::local_envvar(BRANCH_NAME = "development")
-
   # Set up project
+  projectName <- "1-intg-1-dataPrep_presentDay"
+  times       <- list(start = 2010, end = 2015) # Time span: 1985 - 2015
+
   simInitInput <- SpaDEStestMuffleOutput(
 
     SpaDES.project::setupProject(
 
-      times = times,
-
       modules = c(
         "CBM_dataPrep_RIA",
-        paste0("PredictiveEcology/CBM_dataPrep@", Sys.getenv("BRANCH_NAME"))
+        paste0("PredictiveEcology/CBM_dataPrep@", Sys.getenv("BRANCH_NAME", "development"))
       ),
+      times   = times,
       paths   = list(
-        projectPath = projectPath,
+        projectPath = spadesTestPaths$projectPath,
         modulePath  = spadesTestPaths$temp$modules,
         packagePath = spadesTestPaths$packagePath,
         inputPath   = spadesTestPaths$inputPath,
         cachePath   = spadesTestPaths$cachePath,
-        outputPath  = file.path(projectPath, "outputs")
+        outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
       ),
 
       # Set required packages for project set up
@@ -112,7 +99,7 @@ test_that("Integration: CBM_dataPrep - presentDay", {
   expect_true(!is.null(simTest$cohortDT))
   expect_true(inherits(simTest$cohortDT, "data.table"))
 
-  for (colName in c("cohortID", "pixelIndex", "gcids", "ages")){
+  for (colName in c("cohortID", "pixelIndex", "curveID", "age")){
     expect_true(colName %in% names(simTest$cohortDT))
   }
 
@@ -120,9 +107,9 @@ test_that("Integration: CBM_dataPrep - presentDay", {
 
   # Check spinup ages are all >= 2
   expect_true("ageSpinup" %in% names(simTest$cohortDT))
-  expect_equal(simTest$cohortDT$ageSpinup[simTest$cohortDT$ages >= 2],
-               simTest$cohortDT$ages[simTest$cohortDT$ages >= 2])
-  expect_true(all(simTest$ageSpinup[simTest$cohortDT$ages < 2] == 2))
+  expect_equal(simTest$cohortDT$ageSpinup[simTest$cohortDT$age >= 2],
+               simTest$cohortDT$age[simTest$cohortDT$age >= 2])
+  expect_true(all(simTest$ageSpinup[simTest$cohortDT$age < 2] == 2))
 
 
   ## Check output 'userGcM3' ----

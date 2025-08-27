@@ -9,29 +9,23 @@ test_that("Module runs with defaults: All of RIA", {
   testthat::skip_if(testthat::is_testing())
   testthat::skip_on_ci()
 
-  # Set times
-  times <- list(start = 2020, end = 2025)
-
-  # Set project path
-  projectPath <- file.path(spadesTestPaths$temp$projects, "1-module_2-defaults_RIA")
-  dir.create(projectPath)
-  withr::local_dir(projectPath)
-
   # Set up project
+  projectName <- "1-module_2-defaults_RIA"
+  times       <- list(start = 2020, end = 2025)
+
   simInitInput <- SpaDEStestMuffleOutput(
 
     SpaDES.project::setupProject(
 
-      times = times,
-
       modules = "CBM_dataPrep_RIA",
+      times   = times,
       paths   = list(
-        projectPath = projectPath,
+        projectPath = spadesTestPaths$projectPath,
         modulePath  = spadesTestPaths$modulePath,
         packagePath = spadesTestPaths$packagePath,
         inputPath   = spadesTestPaths$inputPath,
         cachePath   = spadesTestPaths$cachePath,
-        outputPath  = file.path(projectPath, "outputs")
+        outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
       )
     )
   )

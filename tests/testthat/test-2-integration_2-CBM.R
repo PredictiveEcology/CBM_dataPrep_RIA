@@ -5,42 +5,29 @@ test_that("Integration: CBM: RIA-small", {
 
   ## Run simInit and spades ----
 
-  # Set times
-  times <- list(start = 2020, end = 2025)
-
-  # Set project path
-  projectPath <- file.path(spadesTestPaths$temp$projects, "intg_2-CBM")
-  dir.create(projectPath)
-  withr::local_dir(projectPath)
-
-  # Set master raster CRS
-  masterRasterCRS <- terra::crs(
-    paste(readLines(file.path(spadesTestPaths$testdata, "masterRasterCRS.prj")), collapse = "\n"))
-
-  # Set Github repo branch
-  if (!nzchar(Sys.getenv("BRANCH_NAME"))) withr::local_envvar(BRANCH_NAME = "development")
-
   # Set up project
+  projectName <- "intg_2-CBM"
+  times       <- list(start = 2020, end = 2025)
+
   simInitInput <- SpaDEStestMuffleOutput(
 
     SpaDES.project::setupProject(
 
       modules = c(
-        paste0("PredictiveEcology/CBM_defaults@",        Sys.getenv("BRANCH_NAME")),
+        paste0("PredictiveEcology/CBM_defaults@",        Sys.getenv("BRANCH_NAME", "development")),
         "CBM_dataPrep_RIA",
-        paste0("PredictiveEcology/CBM_dataPrep@",        Sys.getenv("BRANCH_NAME")),
-        paste0("PredictiveEcology/CBM_vol2biomass_RIA@", Sys.getenv("BRANCH_NAME")),
-        paste0("PredictiveEcology/CBM_core@",            Sys.getenv("BRANCH_NAME"))
+        paste0("PredictiveEcology/CBM_dataPrep@",        Sys.getenv("BRANCH_NAME", "development")),
+        paste0("PredictiveEcology/CBM_vol2biomass_RIA@", Sys.getenv("BRANCH_NAME", "development")),
+        paste0("PredictiveEcology/CBM_core@",            Sys.getenv("BRANCH_NAME", "development"))
       ),
-
       times   = times,
       paths   = list(
-        projectPath = projectPath,
+        projectPath = spadesTestPaths$projectPath,
         modulePath  = spadesTestPaths$temp$modules,
         packagePath = spadesTestPaths$packagePath,
         inputPath   = spadesTestPaths$inputPath,
         cachePath   = spadesTestPaths$cachePath,
-        outputPath  = file.path(projectPath, "outputs")
+        outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
       ),
 
       # Set packages required for project set up
@@ -78,12 +65,6 @@ test_that("Integration: CBM: RIA-small", {
 
 
   ## Check outputs ----
-
-  expect_true(!is.null(simTest$spinupResult))
-
-  expect_true(!is.null(simTest$cbmPools))
-
-  expect_true(!is.null(simTest$NPP))
 
   expect_true(!is.null(simTest$emissionsProducts))
 

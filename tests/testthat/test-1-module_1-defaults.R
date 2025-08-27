@@ -5,33 +5,23 @@ test_that("Module runs with defaults: RIA-small", {
 
   ## Run simInit and spades ----
 
-  # Set times
-  times <- list(start = 2020, end = 2025)
-
-  # Set project path
-  projectPath <- file.path(spadesTestPaths$temp$projects, "1-module_1-defaults")
-  dir.create(projectPath)
-  withr::local_dir(projectPath)
-
-  # Set master raster CRS
-  masterRasterCRS <- terra::crs(
-    paste(readLines(file.path(spadesTestPaths$testdata, "masterRasterCRS.prj")), collapse = "\n"))
-
   # Set up project
+  projectName <- "1-module_1-defaults"
+  times       <- list(start = 2020, end = 2025)
+
   simInitInput <- SpaDEStestMuffleOutput(
 
     SpaDES.project::setupProject(
 
-      times = times,
-
       modules = "CBM_dataPrep_RIA",
+      times   = times,
       paths   = list(
-        projectPath = projectPath,
+        projectPath = spadesTestPaths$projectPath,
         modulePath  = spadesTestPaths$modulePath,
         packagePath = spadesTestPaths$packagePath,
         inputPath   = spadesTestPaths$inputPath,
         cachePath   = spadesTestPaths$cachePath,
-        outputPath  = file.path(projectPath, "outputs")
+        outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
       ),
 
       require = "terra",
