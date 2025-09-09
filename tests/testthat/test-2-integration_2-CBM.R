@@ -35,7 +35,7 @@ test_that("Integration: CBM: RIA-small", {
 
       # Set study area
       masterRaster = terra::rast(
-        crs  = file.path(paths$modulePath, "CBM_dataPrep_RIA", "data", "masterRasterCRS.prj"),
+        crs  = file.path("data", "masterRasterCRS.prj"),
         res  = 250,
         vals = 1L,
         xmin = -1653000,
