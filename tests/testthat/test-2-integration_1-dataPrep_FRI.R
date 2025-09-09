@@ -32,7 +32,7 @@ test_that("Integration: CBM_dataPrep - FRI", {
 
       # Set study area
       masterRaster = terra::rast(
-        crs  = file.path(spadesTestPaths$RProj, "data", "masterRasterCRS.prj"),
+        crs  = file.path(paths$modulePath, "CBM_dataPrep_RIA", "data", "masterRasterCRS.prj"),
         res  = 250,
         vals = 1L,
         xmin = -1653000,
@@ -50,7 +50,7 @@ test_that("Integration: CBM_dataPrep - FRI", {
       disturbanceRasters = list(`1` = {
 
         distFRI <- reproducible::prepInputs(
-          destinationPath = spadesTestPaths$inputPath,
+          destinationPath = paths$inputPath,
           url        = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8",
           targetFile = "annualFires525yrs.tif",
           fun        = terra::rast

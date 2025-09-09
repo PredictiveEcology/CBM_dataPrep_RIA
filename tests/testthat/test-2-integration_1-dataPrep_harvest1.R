@@ -32,7 +32,7 @@ test_that("Integration: CBM_dataPrep - harvest1", {
 
       # Set study area
       masterRaster = terra::rast(
-        crs  = file.path(spadesTestPaths$RProj, "data", "masterRasterCRS.prj"),
+        crs  = file.path(paths$modulePath, "CBM_dataPrep_RIA", "data", "masterRasterCRS.prj"),
         res  = 250,
         vals = 1L,
         xmin = -1653000,
@@ -52,7 +52,7 @@ test_that("Integration: CBM_dataPrep - harvest1", {
         tsas <- c(16, 40)
 
         reproducible::prepInputs(
-          destinationPath = file.path(spadesTestPaths$inputPath, "harvest1"),
+          destinationPath = file.path(paths$inputPath, "harvest1"),
           url        = "https://drive.google.com/file/d/1JpdB9CKpHga55jBmOlATkVyemqbUjtv5",
           targetFile = "tif_scenrio-carbon-base_20210622.tar.gz",
           fun        = utils::untar
@@ -60,10 +60,10 @@ test_that("Integration: CBM_dataPrep - harvest1", {
 
         list(
           `1` = lapply(setNames(times$start:times$end, times$start:times$end), function(year){
-            file.path(spadesTestPaths$inputPath, "harvest1", "tif", paste0("tsa", tsas), paste0("projected_fire_",    year, ".tif"))
+            file.path(paths$inputPath, "harvest1", "tif", paste0("tsa", tsas), paste0("projected_fire_",    year, ".tif"))
           }),
           `2` = lapply(setNames(times$start:times$end, times$start:times$end), function(year){
-            file.path(spadesTestPaths$inputPath, "harvest1", "tif", paste0("tsa", tsas), paste0("projected_harvest_", year, ".tif"))
+            file.path(paths$inputPath, "harvest1", "tif", paste0("tsa", tsas), paste0("projected_harvest_", year, ".tif"))
           })
         )
       }

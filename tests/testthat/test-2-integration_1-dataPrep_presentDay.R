@@ -32,7 +32,7 @@ test_that("Integration: CBM_dataPrep - presentDay", {
 
       # Set study area
       masterRaster = terra::rast(
-        crs  = file.path(spadesTestPaths$RProj, "data", "masterRasterCRS.prj"),
+        crs  = file.path(paths$modulePath, "CBM_dataPrep_RIA", "data", "masterRasterCRS.prj"),
         res  = 250,
         vals = 1L,
         xmin = -1653000,
@@ -52,14 +52,14 @@ test_that("Integration: CBM_dataPrep - presentDay", {
       ),
       disturbanceRasters = list(
         `1` = reproducible::prepInputs(
-          destinationPath = spadesTestPaths$inputPath,
+          destinationPath = paths$inputPath,
           url             = "https://drive.google.com/file/d/1kxCL-i311yd3cS7QDQ2GwHHtyQFiiXoo",
           archive         = "historicalFire_1985-2015.zip",
           targetFile      = "historicalFire_1985-2015.tif",
           fun             = terra::rast
         ) |> setNames(1985:2015),
         `2` = reproducible::prepInputs(
-          destinationPath = spadesTestPaths$inputPath,
+          destinationPath = paths$inputPath,
           url             = "https://drive.google.com/file/d/1m7mjcx5Sz--RB7x4N3cPYpGkfmxX8KPB",
           archive         = "historicalHarvest_1985-2015.zip",
           targetFile      = "historicalHarvest_1985-2015.tif",
