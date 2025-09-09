@@ -27,10 +27,13 @@ test_that("Module runs with defaults: RIA-small", {
       require = "terra",
 
       masterRaster = terra::rast(
-        vals = 1L,
+        crs  = file.path(spadesTestPaths$RProj, "data", "masterRasterCRS.prj"),
         res  = 250,
-        ext  = c(xmin = -1653000, xmax = -1553000, ymin = 7765000, ymax = 7865000),
-        crs  = masterRasterCRS
+        vals = 1L,
+        xmin = -1653000,
+        xmax = -1553000,
+        ymin =  7765000,
+        ymax =  7865000
       )
     )
   )

@@ -27,8 +27,7 @@ defineModule(sim, list(
   inputObjects = bindrows(
     expectsInput(
       objectName = "masterRaster", objectClass = "SpatRaster",
-      desc = "Raster template defining the study area. Default is the RIA study area.",
-      sourceURL = "https://drive.google.com/file/d/1h7gK44g64dwcoqhij24F2K54hs5e35Ci"),
+      desc = "Raster template defining the study area. Default is the RIA study area."),
     expectsInput(
       objectName = "ageLocator", objectClass = "sf|SpatRaster",
       desc = "Spatial data source of stand ages. Default is BC VRI data from 2015 or 2020.",
@@ -121,11 +120,14 @@ Init <- function(sim){
     message("User has not supplied a master raster ('masterRaster' or 'masterRasterURL'). ",
             "Default for RIA will be used.")
 
-    sim$masterRaster <- prepInputs(
-      destinationPath = inputPath(sim),
-      url        = extractURL("masterRaster"),
-      targetFile = "RIA_rtm.tif",
-      fun        = terra::rast
+    sim$masterRaster <- terra::rast(
+      crs  = file.path(dataPath(sim), "masterRasterCRS.prj"),
+      res  = 250,
+      vals = 1L,
+      xmin = -1963750,
+      xmax = -1321250,
+      ymin =  7407500,
+      ymax =  8239000
     )
   }
 
