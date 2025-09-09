@@ -48,8 +48,6 @@ test_that("Integration: CBM_dataPrep", {
 
   expect_s4_class(simTestInit, "simList")
 
-  devtools::load_all("C:/Users/sumurray/Documents/ForkSpaDES/_development/CBMutils")
-
   # Run spades
   simTest <- SpaDEStestMuffleOutput(
     SpaDES.core::spades(simTestInit)
