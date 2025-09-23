@@ -152,8 +152,8 @@ Init <- function(sim){
         vri3ColsPath,
         layer  = "VRI_3Cols",
         query  = "SELECT CAST(PROJ_AGE_1 AS smallint) AS age FROM VRI_3Cols WHERE PROJ_AGE_1 IS NOT NULL",
-        extent = sim$masterRaster,
-        buffer = if (!is.null(sim$masterRaster)) max(terra::res(sim$masterRaster)),
+        extent = if (suppliedElsewhere("masterRaster", sim, where = "user")) sim$masterRaster,
+        buffer = if (suppliedElsewhere("masterRaster", sim, where = "user")) max(terra::res(sim$masterRaster)),
         agr    = "constant"
       ) |> Cache()
 
@@ -174,8 +174,8 @@ Init <- function(sim){
         ageLocatorPath,
         layer  = "VEG_COMP_LYR_L1_POLY",
         query  = "SELECT CAST(PROJ_AGE_1 AS smallint) AS age FROM VEG_COMP_LYR_L1_POLY WHERE PROJ_AGE_1 IS NOT NULL",
-        extent = sim$masterRaster,
-        buffer = if (!is.null(sim$masterRaster)) max(terra::res(sim$masterRaster)),
+        extent = if (suppliedElsewhere("masterRaster", sim, where = "user")) sim$masterRaster,
+        buffer = if (suppliedElsewhere("masterRaster", sim, where = "user"))  max(terra::res(sim$masterRaster)),
         agr    = "constant"
       ) |> Cache()
 
@@ -203,8 +203,8 @@ Init <- function(sim){
       vri3ColsPath,
       layer  = "VRI_3Cols",
       query  = "SELECT CAST(curve2 AS integer) AS \"curveID\" FROM VRI_3Cols WHERE curve2 IS NOT NULL",
-      extent = sim$masterRaster,
-      buffer = if (!is.null(sim$masterRaster)) max(terra::res(sim$masterRaster)),
+      extent = if (suppliedElsewhere("masterRaster", sim, where = "user")) sim$masterRaster,
+      buffer = if (suppliedElsewhere("masterRaster", sim, where = "user"))  max(terra::res(sim$masterRaster)),
       agr    = "constant"
     ) |> Cache()
   }
