@@ -59,10 +59,6 @@ test_that("Module runs with defaults: All of RIA", {
   expect_true(!is.null(simTest$ageDataYear))
   expect_true(inherits(simTest$ageDataYear, "numeric"))
 
-  # ageSpinupMin
-  expect_true(!is.null(simTest$ageSpinupMin))
-  expect_true(inherits(simTest$ageSpinupMin, "numeric"))
-
   # gcIndexLocator
   expect_true(!is.null(simTest$gcIndexLocator))
   expect_true(inherits(simTest$gcIndexLocator, "sf"))

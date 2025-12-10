@@ -108,12 +108,6 @@ test_that("Integration: CBM_dataPrep - presentDay", {
 
   expect_identical(data.table::key(simTest$cohortDT), "cohortID")
 
-  # Check spinup ages are all >= 2
-  expect_true("ageSpinup" %in% names(simTest$cohortDT))
-  expect_equal(simTest$cohortDT$ageSpinup[simTest$cohortDT$age >= 2],
-               simTest$cohortDT$age[simTest$cohortDT$age >= 2])
-  expect_true(all(simTest$ageSpinup[simTest$cohortDT$age < 2] == 2))
-
 
   ## Check output 'userGcM3' ----
 

@@ -39,9 +39,6 @@ defineModule(sim, list(
       objectName = "ageDataYear", objectClass = "numeric",
       desc = "Year that the ages in `ageLocator` represent."),
     expectsInput(
-      objectName = "ageSpinupMin", objectClass = "numeric",
-      desc = "Minimum age for cohorts during spinup."),
-    expectsInput(
       objectName = "gcIndexLocator", objectClass = "sf|SpatRaster",
       desc = "Spatial data source of growth curve index locations.", #TODO: Define default data source
       sourceURL = "https://drive.google.com/file/d/1LXSX8M46EnsTCM3wGhkiMgqWcqTubC12"),
@@ -71,9 +68,6 @@ defineModule(sim, list(
     createsOutput(
       objectName = "ageDataYear", objectClass = "integer",
       desc = "Data year of default `ageLocator` if not provided elsewhere by user."),
-    createsOutput(
-      objectName = "ageSpinupMin", objectClass = "integer",
-      desc = "Default minimum age for cohorts during spinup is set to 2 if `ageLocator` not provided elsewhere by user."),
     createsOutput(
       objectName = "gcIndexLocator", objectClass = "SpatRaster",
       desc = "Default `gcIndexLocator` if not provided elsewhere by user."),
@@ -158,7 +152,6 @@ Init <- function(sim){
       ) |> Cache()
 
       sim$ageDataYear <- 2020
-      sim$ageSpinupMin <- 2
 
     }else{
 
@@ -180,7 +173,6 @@ Init <- function(sim){
       ) |> Cache()
 
       sim$ageDataYear <- 2015
-      sim$ageSpinupMin <- 2
     }
   }
 
