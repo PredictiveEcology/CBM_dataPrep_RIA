@@ -213,7 +213,7 @@ Init <- function(sim){
       targetFile = "au_table.csv",
       fun        = data.table::fread
     )[, V1 := NULL]
-    data.table::setnames(sim$userGcMeta, "au_id", "curveID")
+    data.table::setnames(sim$userGcMeta, "au_id", "curveID", skip_absent = TRUE)
     data.table::setkey(sim$userGcMeta, curveID)
 
     # Get species names
