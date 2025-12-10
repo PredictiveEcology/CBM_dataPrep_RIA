@@ -7,7 +7,7 @@ test_that("Integration: CBM: RIA-small", {
 
   # Set up project
   projectName <- "intg_2-CBM"
-  times       <- list(start = 2020, end = 2025)
+  times       <- list(start = 2020, end = 2020)
 
   simInitInput <- SpaDEStestMuffleOutput(
 

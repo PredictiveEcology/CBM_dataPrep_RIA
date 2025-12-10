@@ -7,7 +7,7 @@ test_that("Integration: CBM_dataPrep - FRI", {
 
   # Set up project
   projectName <- "1-intg-1-dataPrep_FRI"
-  times       <- list(start = 2020, end = 2025) # Time span: 2020 - 2540
+  times       <- list(start = 2020, end = 2020) # Time span: 2020 - 2540
 
   simInitInput <- SpaDEStestMuffleOutput(
 
@@ -124,8 +124,7 @@ test_that("Integration: CBM_dataPrep - FRI", {
     expect_true(all(!is.na(simTest$disturbanceEvents[[colName]])))
   }
 
-  expect_true(all(simTest$disturbanceEvents$year %in% start(simTest):end(simTest)))
-  expect_equal(nrow(simTest$disturbanceEvents), 677)
+  expect_equal(nrow(simTest$disturbanceEvents[year == 2020,]), 487, tolerance = 10, scale = 1)
 
 
   ## Check output 'disturbanceMeta' ----

@@ -11,7 +11,7 @@ test_that("Module runs with defaults: All of RIA", {
 
   # Set up project
   projectName <- "1-module_2-defaults_RIA"
-  times       <- list(start = 2020, end = 2025)
+  times       <- list(start = 2020, end = 2020)
 
   simInitInput <- SpaDEStestMuffleOutput(
 

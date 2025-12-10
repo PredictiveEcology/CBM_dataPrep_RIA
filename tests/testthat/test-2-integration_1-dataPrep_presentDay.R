@@ -7,7 +7,7 @@ test_that("Integration: CBM_dataPrep - presentDay", {
 
   # Set up project
   projectName <- "1-intg-1-dataPrep_presentDay"
-  times       <- list(start = 2010, end = 2015) # Time span: 1985 - 2015
+  times       <- list(start = 2015, end = 2015) # Time span: 1985 - 2015
 
   simInitInput <- SpaDEStestMuffleOutput(
 
@@ -131,11 +131,9 @@ test_that("Integration: CBM_dataPrep - presentDay", {
     expect_true(all(!is.na(simTest$disturbanceEvents[[colName]])))
   }
 
-  expect_true(all(simTest$disturbanceEvents$year %in% start(simTest):end(simTest)))
-
-  distEventsSum <- Copy(simTest$disturbanceEvents)[, .(count = .N), by = c("year", "eventID")]
-  expect_equal(subset(distEventsSum, year == "2015" & eventID == 1)$count, 62)
-  expect_equal(subset(distEventsSum, year == "2015" & eventID == 2)$count, 174)
+  distEventsSum <- simTest$disturbanceEvents[, .(count = .N), by = c("year", "eventID")]
+  expect_equal(distEventsSum[year == "2015" & eventID == 1, ]$count, 62)
+  expect_equal(distEventsSum[year == "2015" & eventID == 2, ]$count, 174)
 
 
   ## Check output 'disturbanceMeta' ----

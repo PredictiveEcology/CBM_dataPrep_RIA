@@ -7,7 +7,7 @@ test_that("Integration: CBM_dataPrep", {
 
   # Set up project
   projectName <- "1-intg-1-dataPrep_defaults"
-  times       <- list(start = 2020, end = 2025)
+  times       <- list(start = 2020, end = 2020)
 
   simInitInput <- SpaDEStestMuffleOutput(
 

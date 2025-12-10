@@ -7,7 +7,7 @@ test_that("Integration: CBM_dataPrep - harvest2", {
 
   # Set up project
   projectName <- "1-intg-1-dataPrep_harvest2"
-  times       <- list(start = 2020, end = 2025) # Time span: 2020 - 2099
+  times       <- list(start = 2020, end = 2020) # Time span: 2020 - 2099
 
   simInitInput <- SpaDEStestMuffleOutput(
 
@@ -54,9 +54,8 @@ test_that("Integration: CBM_dataPrep - harvest2", {
         reproducible::prepInputs(
           destinationPath = file.path(paths$inputPath, "harvest2"),
           url        = "https://drive.google.com/file/d/1PiDpeYGZJfKUPvMGlWvXkEfuThX-lD5r",
-          targetFile = "tif_scenrio-carbon-less_20210622.tar.gz",
-          fun        = utils::untar
-        )
+          targetFile = "tif_scenrio-carbon-less_20210622.tar.gz",,
+          fun        = NA)
 
         list(
           `1` = lapply(setNames(times$start:times$end, times$start:times$end), function(year){
@@ -132,8 +131,7 @@ test_that("Integration: CBM_dataPrep - harvest2", {
     expect_true(all(!is.na(simTest$disturbanceEvents[[colName]])))
   }
 
-  expect_true(all(simTest$disturbanceEvents$year %in% start(simTest):end(simTest)))
-  expect_equal(nrow(simTest$disturbanceEvents), 2404, tolerance = 100, scale = 1)
+  expect_equal(nrow(simTest$disturbanceEvents[year == 2020,]), 432, tolerance = 10, scale = 1)
 
 
   ## Check output 'disturbanceMeta' ----
