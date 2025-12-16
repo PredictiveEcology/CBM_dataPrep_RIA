@@ -19,7 +19,8 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("CBM_dataPrep_RIA.Rmd"),
   reqdPkgs = list(
-    "reproducible (>=2.1.2)", "data.table", "terra", "sf"
+    "reproducible (>=2.1.2)", "data.table", "terra", "sf",
+    "googledrive", "httr2", "rvest"
   ),
   parameters = rbind(
     defineParameter(".useCache", "logical", TRUE, NA, NA, "Cache module events")
