@@ -77,10 +77,7 @@ defineModule(sim, list(
       desc = "Default `userGcMeta` if not provided elsewhere by user."),
     createsOutput(
       objectName = "userGcM3", objectClass = "data.table",
-      desc = "Default `userGcM3` if not provided elsewhere by user."),
-    createsOutput(
-      objectName = "curveID", objectClass = "character",
-      desc = "`gcIndexLocator`, `userGcMeta`, and `userGcM3` growth curve ID.")
+      desc = "Default `userGcM3` if not provided elsewhere by user.")
   )
 ))
 
