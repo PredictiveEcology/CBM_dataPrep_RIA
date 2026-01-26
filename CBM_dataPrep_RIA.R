@@ -1,6 +1,3 @@
-
-## DEFINE MODULE ----
-
 defineModule(sim, list(
   name = "CBM_dataPrep_RIA",
   description = paste(
@@ -46,11 +43,11 @@ defineModule(sim, list(
     expectsInput(
       objectName = "userGcMeta", objectClass = "data.table",
       desc = "Growth curve metadata.", #TODO: Define default data source
-      sourceURL = "https://drive.google.com/file/d/1YmQ6sNucpEmF8gYkRMocPoeKt2P26ZiX"),
+      sourceURL = "https://drive.google.com/file/d/1tTzW32U-1Dv43UpYe0EdlocvcrAzXecF/"),
     expectsInput(
       objectName = "userGcM3", objectClass = "data.table",
       desc = "Growth curve volumes by age.", #TODO: Define default data source
-      sourceURL = "https://drive.google.com/file/d/1BYHhuuhSGIILV1gmoo9sNjAfMaxs7qAj"),
+      sourceURL = "https://drive.google.com/file/d/1tTzW32U-1Dv43UpYe0EdlocvcrAzXecF"),
     expectsInput(
       objectName = "canfi_species", objectClass = "data.table",
       desc = "Table of CanFI species. Required to get species names for the default `userGcMeta`",
@@ -96,22 +93,22 @@ doEvent.CBM_dataPrep_RIA <- function(sim, eventTime, eventType, debug = FALSE) {
 }
 
 Init <- function(sim){
-
+  
   # Set admin boundary name
   sim$adminLocator <- "British Columbia"
-
+  
   # Return simList
   return(invisible(sim))
 }
 
 .inputObjects <- function(sim) {
-
+  
   # Master raster
   if (!any(sapply(c("masterRaster", "masterRasterURL"), suppliedElsewhere, sim))){
-
+    
     message("User has not supplied a master raster ('masterRaster' or 'masterRasterURL'). ",
             "Default for RIA will be used.")
-
+    
     sim$masterRaster <- terra::rast(
       crs  = file.path(dataPath(sim), "masterRasterCRS.prj"),
       res  = 250,
@@ -122,15 +119,15 @@ Init <- function(sim){
       ymax =  8239000
     )
   }
-
+  
   # Stand ages
   if (!any(sapply(c("ageLocator", "ageLocatorURL"), suppliedElsewhere, sim))){
-
+    
     message("User has not supplied stand age locations ('ageLocator' or 'ageRasterURL'). ",
             "Default for RIA will be used.")
-
+    
     if (!isTRUE(sim$ageDataYear == 2015)){
-
+      
       vri3ColsPath <- prepInputs(
         destinationPath = inputPath(sim),
         url         = extractURL("ageLocator")[[2]],
@@ -139,7 +136,7 @@ Init <- function(sim){
         alsoExtract = "similar",
         fun         = NA
       ) |> Cache()
-
+      
       sim$ageLocator <- st_read_extent(
         vri3ColsPath,
         layer  = "VRI_3Cols",
@@ -148,11 +145,11 @@ Init <- function(sim){
         buffer = if (suppliedElsewhere("masterRaster", sim, where = "user")) max(terra::res(sim$masterRaster)),
         agr    = "constant"
       ) |> Cache()
-
+      
       sim$ageDataYear <- 2020
-
+      
     }else{
-
+      
       ageLocatorPath <- prepInputs(
         destinationPath = inputPath(sim),
         url         = extractURL("ageLocator")[[1]],
@@ -160,7 +157,7 @@ Init <- function(sim){
         archive     = NA,
         fun         = NA
       ) |> Cache()
-
+      
       sim$ageLocator <- st_read_extent(
         ageLocatorPath,
         layer  = "VEG_COMP_LYR_L1_POLY",
@@ -169,17 +166,17 @@ Init <- function(sim){
         buffer = if (suppliedElsewhere("masterRaster", sim, where = "user"))  max(terra::res(sim$masterRaster)),
         agr    = "constant"
       ) |> Cache()
-
+      
       sim$ageDataYear <- 2015
     }
   }
-
+  
   # Growth curve locations
   if (!any(sapply(c("gcIndexLocator", "gcIndexLocatorURL"), suppliedElsewhere, sim))){
-
+    
     message("User has not supplied growth curve locations ('gcIndexLocator' or 'gcIndexLocatorURL'). ",
             "Default for RIA will be used.")
-
+    
     vri3ColsPath <- prepInputs(
       destinationPath = inputPath(sim),
       url         = extractURL("gcIndexLocator"),
@@ -188,7 +185,7 @@ Init <- function(sim){
       alsoExtract = "similar",
       fun         = NA
     ) |> Cache()
-
+    
     sim$gcIndexLocator <- st_read_extent(
       vri3ColsPath,
       layer  = "VRI_3Cols",
@@ -196,24 +193,28 @@ Init <- function(sim){
       extent = if (suppliedElsewhere("masterRaster", sim, where = "user")) sim$masterRaster,
       buffer = if (suppliedElsewhere("masterRaster", sim, where = "user"))  max(terra::res(sim$masterRaster)),
       agr    = "constant"
-    ) |> Cache()
+    ) 
+    
+    sim$gcIndexLocator$curveID[
+      sim$gcIndexLocator$curveID %in% c(4102001L, 4103001L)
+    ] <- 4101001L
   }
-
+  
   # Growth curve metadata
   if (!any(sapply(c("userGcMeta", "userGcMetaURL"), suppliedElsewhere, sim))){
-
+    
     message("User has not supplied growth curve metadata ('userGcMeta' or 'gcMetaURL'). ",
             "Default for RIA will be used.")
-
+    
     sim$userGcMeta <- prepInputs(
       destinationPath = inputPath(sim),
       url        = extractURL("userGcMeta"),
-      targetFile = "au_table.csv",
+      targetFile = "au_table_fix.csv",
       fun        = data.table::fread
     )[, V1 := NULL]
     data.table::setnames(sim$userGcMeta, "au_id", "curveID", skip_absent = TRUE)
     data.table::setkey(sim$userGcMeta, curveID)
-
+    
     # Get species names
     if (!suppliedElsewhere("canfi_species", sim)) {
       sim$canfi_species <- prepInputs(
@@ -228,13 +229,13 @@ Init <- function(sim){
       sim$canfi_species[, .(canfi_species, species = name)],
       by = "canfi_species", all.x = TRUE)
   }
-
+  
   # Growth curve volumes
   if (!any(sapply(c("userGcM3", "userGcM3URL"), suppliedElsewhere, sim))){
-
+    
     message("User has not supplied growth curve volumes ('userGcM3' or 'userGcM3URL'). ",
             "Default for RIA will be used.")
-
+    
     sim$userGcM3 <- prepInputs(
       destinationPath = inputPath(sim),
       url        = extractURL("userGcM3"),
@@ -244,44 +245,40 @@ Init <- function(sim){
     data.table::setnames(sim$userGcM3, names(sim$userGcM3), c("curveID", "Age", "MerchVolume"))
     data.table::setkey(sim$userGcM3, curveID, Age)
   }
-
+  
   # Return simList
   return(invisible(sim))
-
+  
 }
 
 
 # Helper function: read vector data source with extent filter
 st_read_extent <- function(dsn, layer = NULL, extent = NULL, buffer = NULL, ...){
-
+  
   if (!is.null(extent)){
-
+    
     if (is.null(layer)){
       layer <- tools::file_path_sans_ext(tools::file_path_sans_ext(basename(dsn)))
     }
-
+    
     targetCRS <- sf::st_crs(
       sf::st_read(
         dsn,
         query = sprintf("SELECT * FROM \"%s\" LIMIT 0", layer),
         quiet = TRUE
       ))
-
+    
     extent <- sf::st_as_sfc(sf::st_bbox(extent))
     if (!is.null(buffer)){
       extent <- sf::st_buffer(extent, buffer, joinStyle = "MITRE", mitreLimit = 5)
     }
     wkt_filter <- sf::st_as_text(
       sf::st_transform(extent, crs = targetCRS))
-
+    
   }else wkt_filter <- character(0)
-
+  
   sf::st_read(
     dsn, wkt_filter = wkt_filter,
     quiet = TRUE,
     ...)
 }
-
-
-
-
