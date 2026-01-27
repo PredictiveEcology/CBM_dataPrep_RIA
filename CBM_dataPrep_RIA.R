@@ -195,9 +195,7 @@ Init <- function(sim){
       agr    = "constant"
     ) 
     
-    sim$gcIndexLocator$curveID[
-      sim$gcIndexLocator$curveID %in% c(4102001L, 4103001L)
-    ] <- 4101001L
+    sim$gcIndexLocator$curveID[sim$gcIndexLocator$curveID %in% c(4102001L, 4103001L)] <- 4101001L
   }
   
   # Growth curve metadata
