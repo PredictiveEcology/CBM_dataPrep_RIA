@@ -12,11 +12,11 @@ test_that("Integration: CBM: RIA-small", {
   simInitInput <- SpaDES.project::setupProject(
 
     modules = c(
-      paste0("PredictiveEcology/CBM_defaults@",        Sys.getenv("BRANCH_NAME", "development")),
+      paste0("PredictiveEcology/CBM_defaults@",    Sys.getenv("BRANCH_NAME", "development")),
       "CBM_dataPrep_RIA",
-      paste0("PredictiveEcology/CBM_dataPrep@",        Sys.getenv("BRANCH_NAME", "development")),
-      paste0("PredictiveEcology/CBM_vol2biomass_RIA@", Sys.getenv("BRANCH_NAME", "development")),
-      paste0("PredictiveEcology/CBM_core@",            Sys.getenv("BRANCH_NAME", "development"))
+      paste0("PredictiveEcology/CBM_dataPrep@",    Sys.getenv("BRANCH_NAME", "development")),
+      paste0("PredictiveEcology/CBM_vol2biomass@", Sys.getenv("BRANCH_NAME", "development")),
+      paste0("PredictiveEcology/CBM_core@",        Sys.getenv("BRANCH_NAME", "development"))
     ),
     times   = times,
     paths   = list(
