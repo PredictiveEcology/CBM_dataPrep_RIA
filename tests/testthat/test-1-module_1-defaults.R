@@ -9,47 +9,38 @@ test_that("Module runs with defaults: RIA-small", {
   projectName <- "1-module_1-defaults"
   times       <- list(start = 2020, end = 2020)
 
-  simInitInput <- SpaDEStestMuffleOutput(
+  simInitInput <- SpaDES.project::setupProject(
 
-    SpaDES.project::setupProject(
+    modules = "CBM_dataPrep_RIA",
+    times   = times,
+    paths   = list(
+      projectPath = spadesTestPaths$projectPath,
+      modulePath  = spadesTestPaths$modulePath,
+      packagePath = spadesTestPaths$packagePath,
+      inputPath   = spadesTestPaths$inputPath,
+      cachePath   = spadesTestPaths$cachePath,
+      outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
+    ),
 
-      modules = "CBM_dataPrep_RIA",
-      times   = times,
-      paths   = list(
-        projectPath = spadesTestPaths$projectPath,
-        modulePath  = spadesTestPaths$modulePath,
-        packagePath = spadesTestPaths$packagePath,
-        inputPath   = spadesTestPaths$inputPath,
-        cachePath   = spadesTestPaths$cachePath,
-        outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
-      ),
+    require = "terra",
 
-      require = "terra",
-
-      masterRaster = terra::rast(
-        crs  = file.path("data", "masterRasterCRS.prj"),
-        res  = 250,
-        vals = 1L,
-        xmin = -1653000,
-        xmax = -1553000,
-        ymin =  7765000,
-        ymax =  7865000
-      )
+    masterRaster = terra::rast(
+      crs  = file.path("data", "masterRasterCRS.prj"),
+      res  = 250,
+      vals = 1L,
+      xmin = -1653000,
+      xmax = -1553000,
+      ymin =  7765000,
+      ymax =  7865000
     )
   )
 
   # Run simInit
-  simTestInit <- SpaDEStestMuffleOutput(
-    SpaDES.core::simInit2(simInitInput)
-  )
-
+  simTestInit <- SpaDES.core::simInit2(simInitInput)
   expect_s4_class(simTestInit, "simList")
 
   # Run spades
-  simTest <- SpaDEStestMuffleOutput(
-    SpaDES.core::spades(simTestInit)
-  )
-
+  simTest <- SpaDES.core::spades(simTestInit)
   expect_s4_class(simTest, "simList")
 
 

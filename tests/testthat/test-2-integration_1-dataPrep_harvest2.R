@@ -9,78 +9,69 @@ test_that("Integration: CBM_dataPrep - harvest2", {
   projectName <- "1-intg-1-dataPrep_harvest2"
   times       <- list(start = 2020, end = 2020) # Time span: 2020 - 2099
 
-  simInitInput <- SpaDEStestMuffleOutput(
+  simInitInput <- SpaDES.project::setupProject(
 
-    SpaDES.project::setupProject(
+    modules = c(
+      "CBM_dataPrep_RIA",
+      paste0("PredictiveEcology/CBM_dataPrep@", Sys.getenv("BRANCH_NAME", "development"))
+    ),
+    times   = times,
+    paths   = list(
+      projectPath = spadesTestPaths$projectPath,
+      modulePath  = spadesTestPaths$temp$modules,
+      packagePath = spadesTestPaths$packagePath,
+      inputPath   = spadesTestPaths$inputPath,
+      cachePath   = spadesTestPaths$cachePath,
+      outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
+    ),
 
-      modules = c(
-        "CBM_dataPrep_RIA",
-        paste0("PredictiveEcology/CBM_dataPrep@", Sys.getenv("BRANCH_NAME", "development"))
-      ),
-      times   = times,
-      paths   = list(
-        projectPath = spadesTestPaths$projectPath,
-        modulePath  = spadesTestPaths$temp$modules,
-        packagePath = spadesTestPaths$packagePath,
-        inputPath   = spadesTestPaths$inputPath,
-        cachePath   = spadesTestPaths$cachePath,
-        outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
-      ),
+    # Set required packages for project set up
+    require = c("terra", "reproducible"),
 
-      # Set required packages for project set up
-      require = c("terra", "reproducible"),
+    # Set study area
+    masterRaster = terra::rast(
+      crs  = file.path("data", "masterRasterCRS.prj"),
+      res  = 250,
+      vals = 1L,
+      xmin = -1653000,
+      xmax = -1553000,
+      ymin =  7765000,
+      ymax =  7865000
+    ),
 
-      # Set study area
-      masterRaster = terra::rast(
-        crs  = file.path("data", "masterRasterCRS.prj"),
-        res  = 250,
-        vals = 1L,
-        xmin = -1653000,
-        xmax = -1553000,
-        ymin =  7765000,
-        ymax =  7865000
-      ),
+    # Set disturbances
+    disturbanceMeta = data.table(
+      eventID  = c(1, 2),
+      name     = c("Wildfire", "Clearcut harvesting without salvage"),
+      priority = c(1, 2)
+    ),
+    disturbanceRasters = {
 
-      # Set disturbances
-      disturbanceMeta = data.table(
-        eventID  = c(1, 2),
-        name     = c("Wildfire", "Clearcut harvesting without salvage"),
-        priority = c(1, 2)
-      ),
-      disturbanceRasters = {
+      tsas <- c(16, 40)
 
-        tsas <- c(16, 40)
+      reproducible::prepInputs(
+        destinationPath = file.path(paths$inputPath, "harvest2"),
+        url        = "https://drive.google.com/file/d/1PiDpeYGZJfKUPvMGlWvXkEfuThX-lD5r",
+        targetFile = "tif_scenrio-carbon-less_20210622.tar.gz",,
+        fun        = NA)
 
-        reproducible::prepInputs(
-          destinationPath = file.path(paths$inputPath, "harvest2"),
-          url        = "https://drive.google.com/file/d/1PiDpeYGZJfKUPvMGlWvXkEfuThX-lD5r",
-          targetFile = "tif_scenrio-carbon-less_20210622.tar.gz",,
-          fun        = NA)
-
-        list(
-          `1` = lapply(setNames(times$start:times$end, times$start:times$end), function(year){
-            file.path(paths$inputPath, "harvest2", "tif", paste0("tsa", tsas), paste0("projected_fire_",    year, ".tif"))
-          }),
-          `2` = lapply(setNames(times$start:times$end, times$start:times$end), function(year){
-            file.path(paths$inputPath, "harvest2", "tif", paste0("tsa", tsas), paste0("projected_harvest_", year, ".tif"))
-          })
-        )
-      }
-    )
+      list(
+        `1` = lapply(setNames(times$start:times$end, times$start:times$end), function(year){
+          file.path(paths$inputPath, "harvest2", "tif", paste0("tsa", tsas), paste0("projected_fire_",    year, ".tif"))
+        }),
+        `2` = lapply(setNames(times$start:times$end, times$start:times$end), function(year){
+          file.path(paths$inputPath, "harvest2", "tif", paste0("tsa", tsas), paste0("projected_harvest_", year, ".tif"))
+        })
+      )
+    }
   )
 
   # Run simInit
-  simTestInit <- SpaDEStestMuffleOutput(
-    SpaDES.core::simInit2(simInitInput)
-  )
-
+  simTestInit <- SpaDES.core::simInit2(simInitInput)
   expect_s4_class(simTestInit, "simList")
 
   # Run spades
-  simTest <- SpaDEStestMuffleOutput(
-    SpaDES.core::spades(simTestInit)
-  )
-
+  simTest <- SpaDES.core::spades(simTestInit)
   expect_s4_class(simTest, "simList")
 
 

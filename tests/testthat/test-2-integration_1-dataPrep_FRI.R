@@ -9,71 +9,62 @@ test_that("Integration: CBM_dataPrep - FRI", {
   projectName <- "1-intg-1-dataPrep_FRI"
   times       <- list(start = 2020, end = 2020) # Time span: 2020 - 2540
 
-  simInitInput <- SpaDEStestMuffleOutput(
+  simInitInput <- SpaDES.project::setupProject(
 
-    SpaDES.project::setupProject(
+    modules = c(
+      "CBM_dataPrep_RIA",
+      paste0("PredictiveEcology/CBM_dataPrep@", Sys.getenv("BRANCH_NAME", "development"))
+    ),
+    times   = times,
+    paths   = list(
+      projectPath = spadesTestPaths$projectPath,
+      modulePath  = spadesTestPaths$temp$modules,
+      packagePath = spadesTestPaths$packagePath,
+      inputPath   = spadesTestPaths$inputPath,
+      cachePath   = spadesTestPaths$cachePath,
+      outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
+    ),
 
-      modules = c(
-        "CBM_dataPrep_RIA",
-        paste0("PredictiveEcology/CBM_dataPrep@", Sys.getenv("BRANCH_NAME", "development"))
-      ),
-      times   = times,
-      paths   = list(
-        projectPath = spadesTestPaths$projectPath,
-        modulePath  = spadesTestPaths$temp$modules,
-        packagePath = spadesTestPaths$packagePath,
-        inputPath   = spadesTestPaths$inputPath,
-        cachePath   = spadesTestPaths$cachePath,
-        outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
-      ),
+    # Set required packages for project set up
+    require = c("terra", "reproducible"),
 
-      # Set required packages for project set up
-      require = c("terra", "reproducible"),
+    # Set study area
+    masterRaster = terra::rast(
+      crs  = file.path("data", "masterRasterCRS.prj"),
+      res  = 250,
+      vals = 1L,
+      xmin = -1653000,
+      xmax = -1553000,
+      ymin =  7765000,
+      ymax =  7865000
+    ),
 
-      # Set study area
-      masterRaster = terra::rast(
-        crs  = file.path("data", "masterRasterCRS.prj"),
-        res  = 250,
-        vals = 1L,
-        xmin = -1653000,
-        xmax = -1553000,
-        ymin =  7765000,
-        ymax =  7865000
-      ),
+    # Set disturbances
+    disturbanceMeta = data.table(
+      eventID  = c(1, 2),
+      name     = c("Wildfire", "Clearcut harvesting without salvage"),
+      priority = c(1, 2)
+    ),
+    disturbanceRasters = list(`1` = {
 
-      # Set disturbances
-      disturbanceMeta = data.table(
-        eventID  = c(1, 2),
-        name     = c("Wildfire", "Clearcut harvesting without salvage"),
-        priority = c(1, 2)
-      ),
-      disturbanceRasters = list(`1` = {
+      distFRI <- reproducible::prepInputs(
+        destinationPath = paths$inputPath,
+        url        = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8",
+        targetFile = "annualFires525yrs.tif",
+        fun        = terra::rast
+      )
+      names(distFRI) <- 2015:2540
 
-        distFRI <- reproducible::prepInputs(
-          destinationPath = paths$inputPath,
-          url        = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8",
-          targetFile = "annualFires525yrs.tif",
-          fun        = terra::rast
-        )
-        names(distFRI) <- 2015:2540
-
-        distFRI
-      })
-    )
+      distFRI
+    })
   )
 
   # Run simInit
-  simTestInit <- SpaDEStestMuffleOutput(
-    SpaDES.core::simInit2(simInitInput)
-  )
-
+  simTestInit <- SpaDES.core::simInit2(simInitInput)
   expect_s4_class(simTestInit, "simList")
 
   # Run spades
-  simTest <- SpaDEStestMuffleOutput(
-    SpaDES.core::spades(simTestInit)
-  )
-
+  simTest <- SpaDES.core::spades(simTestInit)
   expect_s4_class(simTest, "simList")
 
 
