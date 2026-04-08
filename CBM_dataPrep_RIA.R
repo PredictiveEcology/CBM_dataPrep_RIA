@@ -43,11 +43,11 @@ defineModule(sim, list(
     expectsInput(
       objectName = "userGcMeta", objectClass = "data.table",
       desc = "Growth curve metadata.", #TODO: Define default data source
-      sourceURL = "https://drive.google.com/file/d/1tTzW32U-1Dv43UpYe0EdlocvcrAzXecF/"),
+      sourceURL = "https://drive.google.com/file/d/1tTzW32U-1Dv43UpYe0EdlocvcrAzXecF"),
     expectsInput(
       objectName = "userGcM3", objectClass = "data.table",
       desc = "Growth curve volumes by age.", #TODO: Define default data source
-      sourceURL = "https://drive.google.com/file/d/1tTzW32U-1Dv43UpYe0EdlocvcrAzXecF"),
+      sourceURL = "https://drive.google.com/file/d/1BYHhuuhSGIILV1gmoo9sNjAfMaxs7qAj"),
     expectsInput(
       objectName = "canfi_species", objectClass = "data.table",
       desc = "Table of CanFI species. Required to get species names for the default `userGcMeta`",
