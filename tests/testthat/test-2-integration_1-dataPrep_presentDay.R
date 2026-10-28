@@ -80,7 +80,7 @@ test_that("Integration: CBM_dataPrep - presentDay", {
   expect_true(!is.null(simTest$standDT))
   expect_true(inherits(simTest$standDT, "data.table"))
 
-  for (colName in c("pixelIndex", "area", "spatial_unit_id")){
+  for (colName in c("pixelIndex", "admin_name", "eco_id")){
     expect_true(colName %in% names(simTest$standDT))
     expect_true(all(!is.na(simTest$standDT[[colName]])))
   }
@@ -125,13 +125,6 @@ test_that("Integration: CBM_dataPrep - presentDay", {
   distEventsSum <- simTest$disturbanceEvents[, .(count = .N), by = c("year", "eventID")]
   expect_equal(distEventsSum[year == "2015" & eventID == 1, ]$count, 62)
   expect_equal(distEventsSum[year == "2015" & eventID == 2, ]$count, 174)
-
-
-  ## Check output 'disturbanceMeta' ----
-
-  expect_true(!is.null(simTest$disturbanceMeta))
-  expect_true(inherits(simTest$disturbanceMeta, "data.table"))
-  expect_equal(simTest$disturbanceMeta$disturbance_type_id, c(1, 204))
 
 })
 

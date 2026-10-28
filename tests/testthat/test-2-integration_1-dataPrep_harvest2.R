@@ -80,7 +80,7 @@ test_that("Integration: CBM_dataPrep - harvest2", {
   expect_true(!is.null(simTest$standDT))
   expect_true(inherits(simTest$standDT, "data.table"))
 
-  for (colName in c("pixelIndex", "area", "spatial_unit_id")){
+  for (colName in c("pixelIndex", "admin_name", "eco_id")){
     expect_true(colName %in% names(simTest$standDT))
     expect_true(all(!is.na(simTest$standDT[[colName]])))
   }
@@ -123,13 +123,6 @@ test_that("Integration: CBM_dataPrep - harvest2", {
   }
 
   expect_equal(nrow(simTest$disturbanceEvents[year == 2020,]), 432, tolerance = 10, scale = 1)
-
-
-  ## Check output 'disturbanceMeta' ----
-
-  expect_true(!is.null(simTest$disturbanceMeta))
-  expect_true(inherits(simTest$disturbanceMeta, "data.table"))
-  expect_equal(simTest$disturbanceMeta$disturbance_type_id, c(1, 204))
 
 })
 

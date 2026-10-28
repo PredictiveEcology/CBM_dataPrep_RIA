@@ -52,7 +52,7 @@ test_that("Integration: CBM_dataPrep", {
   expect_true(!is.null(simTest$standDT))
   expect_true(inherits(simTest$standDT, "data.table"))
 
-  for (colName in c("pixelIndex", "area", "spatial_unit_id")){
+  for (colName in c("pixelIndex", "admin_name", "eco_id")){
     expect_true(colName %in% names(simTest$standDT))
     expect_true(all(!is.na(simTest$standDT[[colName]])))
   }
