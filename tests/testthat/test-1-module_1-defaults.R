@@ -6,26 +6,12 @@ test_that("Module runs with defaults: RIA-small", {
   ## Run simInit and spades ----
 
   # Set up project
-  projectName <- "1-module_1-defaults"
-  times       <- list(start = 2020, end = 2020)
-
-  simInitInput <- SpaDES.project::setupProject(
-
-    modules = "CBM_dataPrep_RIA",
-    times   = times,
-    paths   = list(
-      projectPath = spadesTestPaths$projectPath,
-      modulePath  = spadesTestPaths$modulePath,
-      packagePath = spadesTestPaths$packagePath,
-      inputPath   = spadesTestPaths$inputPath,
-      cachePath   = spadesTestPaths$cachePath,
-      outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
-    ),
-
-    require = "terra",
+  simInitInput <- setupProjectTest(
+    projectName = "1-module_1-defaults",
+    times       = list(start = 2020, end = 2020),
 
     masterRaster = terra::rast(
-      crs  = file.path("data", "masterRasterCRS.prj"),
+      crs  = file.path(test_path("testdata"), "masterRasterCRS.prj"),
       res  = 250,
       vals = 1L,
       xmin = -1653000,
