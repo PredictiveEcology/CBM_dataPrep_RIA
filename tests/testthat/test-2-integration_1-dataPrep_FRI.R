@@ -5,32 +5,20 @@ test_that("Integration: CBM_dataPrep - FRI", {
 
   ## Run simInit and spades ----
 
+  skip_if(as.logical(Sys.getenv("CI", FALSE)) & !"main" %in% Sys.getenv(c("GITHUB_BASE_REF", "GITHUB_REF_NAME")))
+
   # Set up project
-  projectName <- "1-intg-1-dataPrep_FRI"
-  times       <- list(start = 2020, end = 2020) # Time span: 2020 - 2540
-
-  simInitInput <- SpaDES.project::setupProject(
-
-    modules = c(
+  simInitInput <- setupProjectTest(
+    projectName = "1-intg-1-dataPrep_FRI",
+    times       = list(start = 2020, end = 2020), # Time span: 2020 - 2540
+    modules     = c(
       "CBM_dataPrep_RIA",
-      paste0("PredictiveEcology/CBM_dataPrep@", Sys.getenv("BRANCH_NAME", "development"))
+      paste0("PredictiveEcology/CBM_dataPrep@", ifelse("main" %in% Sys.getenv(c("GITHUB_BASE_REF", "GITHUB_REF_NAME")), "main", "development"))
     ),
-    times   = times,
-    paths   = list(
-      projectPath = spadesTestPaths$projectPath,
-      modulePath  = spadesTestPaths$temp$modules,
-      packagePath = spadesTestPaths$packagePath,
-      inputPath   = spadesTestPaths$inputPath,
-      cachePath   = spadesTestPaths$cachePath,
-      outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
-    ),
-
-    # Set required packages for project set up
-    require = c("terra", "reproducible"),
 
     # Set study area
     masterRaster = terra::rast(
-      crs  = file.path("data", "masterRasterCRS.prj"),
+      crs  = file.path(test_path("testdata"), "masterRasterCRS.prj"),
       res  = 250,
       vals = 1L,
       xmin = -1653000,
