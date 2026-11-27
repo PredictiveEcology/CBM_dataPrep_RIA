@@ -5,26 +5,12 @@ test_that("Module runs with defaults: All of RIA", {
 
   ## Run simInit and spades ----
 
-  ## Only run this test manually due to size
-  testthat::skip_if(testthat::is_testing())
-  testthat::skip_on_ci()
+  skip_if(is_testing()) # Test expensive: kept for interactive testing
 
   # Set up project
-  projectName <- "1-module_2-defaults_RIA"
-  times       <- list(start = 2020, end = 2020)
-
-  simInitInput <- SpaDES.project::setupProject(
-
-    modules = "CBM_dataPrep_RIA",
-    times   = times,
-    paths   = list(
-      projectPath = spadesTestPaths$projectPath,
-      modulePath  = spadesTestPaths$modulePath,
-      packagePath = spadesTestPaths$packagePath,
-      inputPath   = spadesTestPaths$inputPath,
-      cachePath   = spadesTestPaths$cachePath,
-      outputPath  = file.path(spadesTestPaths$temp$outputs, projectName)
-    )
+  simInitInput <- setupProjectTest(
+    projectName = "1-module_2-defaults_RIA",
+    times       = list(start = 2020, end = 2020)
   )
 
   # Run simInit
